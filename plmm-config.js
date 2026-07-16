@@ -16,4 +16,11 @@
 //   appId: "1:1234567890:web:abcdef"
 // };
 // ============================================================
-window.PLMM_FIREBASE_CONFIG = null;
+window.PLMM_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyC6OdgABjKT8lyQsXCM2ca1ZpfV-Pbu6y4",
+  authDomain: "plmm-parian.firebaseapp.com",
+  projectId: "plmm-parian",
+  storageBucket: "plmm-parian.firebasestorage.app",
+  messagingSenderId: "1049541397532",
+  appId: "1:1049541397532:web:933e530a25ae4bc3fd23d9"
+};
