@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PLMM — San Agustin Parish, Parian</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:var(--bg);color:var(--text);font-family:'Nunito Sans',system-ui,sans-serif;--bg:#fcfaf9;--card:#ffffff;--line:#ece2da;--line2:#f3ebe4;--soft:#faf5f1;--dim:#fbf7f4;--todaybg:#fff8ea;--redsoft:#fdf1ef;--faint:#c9bcb0;--bstrong:#d9ccc2;--muted:#6b5f57;--muted2:#8a7a6f;--text:#111111;--redink:#bc0700}
+body.dark{--bg:#171310;--card:#221c17;--line:#3a322a;--line2:#2f2822;--soft:#2b241d;--dim:#1d1813;--todaybg:#33270e;--redsoft:#3b1e19;--faint:#5d5347;--bstrong:#4c4237;--muted:#cfc3b4;--muted2:#a2968a;--text:#f5eee5;--redink:#ff8a7d;color-scheme:dark}
+a{color:var(--redink)}a:hover{color:#fc4c0e}
+input,select,button,textarea{font-family:inherit}
+input,select,textarea{background:var(--card);color:var(--text)}
+input::placeholder,textarea::placeholder{color:var(--muted2)}
+input[type="date"],input[type="time"]{-webkit-appearance:none;appearance:none;max-width:100%}
+input::-webkit-date-and-time-value{text-align:left}
+@media (min-width:1100px){body{zoom:1.12}}
+@keyframes plmmFade{from{opacity:0}}
+@keyframes plmmSlide{from{transform:translateX(100%)}}
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="./plmm-config.js"></script>
+</helmet>
+
+<sc-if value="{{ locked }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="PIN Gate" style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:24px;background:var(--bg);box-sizing:border-box">
+  <img src="assets/logo.png" alt="PLMM logo" style="height:110px">
+  <img src="assets/wordmark.png" alt="Parish Liturgical Music Ministry — San Agustin Parish, Parian" style="width:min(380px,86vw)">
+  <div style="background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;width:min(320px,88vw);display:flex;flex-direction:column;gap:10px;box-shadow:0 10px 30px rgba(188,7,0,0.07);box-sizing:border-box">
+    <div style="font-size:11px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted2)">Admins &amp; coordinators only</div>
+    <input ref="{{ pinRef }}" type="password" inputMode="numeric" placeholder="Enter PIN" onKeyDown="{{ pinKey }}" style="width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid var(--bstrong);border-radius:9px;font-size:17px;letter-spacing:4px;text-align:center">
+    <sc-if value="{{ pinError }}" hint-placeholder-val="{{ false }}"><div style="color:var(--redink);font-size:13px;font-weight:700">Incorrect PIN — try again.</div></sc-if>
+    <button onClick="{{ tryUnlock }}" style="padding:11px;border:none;border-radius:999px;background:#bc0700;color:#ffffff;font-size:14px;font-weight:800;letter-spacing:0.5px;cursor:pointer">Unlock</button>
+    <sc-if value="{{ pinIsDefault }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:var(--muted2);text-align:center">First time here? The starting PIN is <b>1234</b> — change it after signing in.</div></sc-if>
+    <div style="font-size:12px;color:var(--muted2);text-align:center">The PIN can be changed after signing in.</div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ appVisible }}" hint-placeholder-val="{{ true }}">
+<div style="min-height:100vh;background:var(--bg);color:var(--text)">
+
+  <sc-if value="{{ notShot }}" hint-placeholder-val="{{ true }}">
+  <div style="background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:40">
+    <div style="max-width:1300px;margin:0 auto;padding:12px 16px 8px;display:flex;align-items:center;gap:11px">
+      <img src="assets/logo.png" alt="" style="height:42px;flex:none">
+      <sc-if value="{{ deskNav }}" hint-placeholder-val="{{ true }}">
+      <div style="min-width:0;flex:1">
+        <div style="font-weight:800;font-size:clamp(14px,3.6vw,20px);line-height:1.15;color:var(--redink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Parish Liturgical Music Ministry</div>
+        <div style="font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted2);font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">San Agustin Parish · Parian</div>
+      </div>
+      </sc-if>
+      <div style="flex:1"></div>
+      <sc-if value="{{ deskNav }}" hint-placeholder-val="{{ true }}">
+      <div title="{{ syncTitle }}" style="display:flex;align-items:center;gap:6px;background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:5px 10px;flex:none">
+        <span style="{{ syncDotStyle }}"></span>
+        <span style="font-size:11px;font-weight:800;color:var(--muted);white-space:nowrap">{{ syncLabel }}</span>
+      </div>
+      <button onClick="{{ openSettings }}" title="Settings — threshold, PIN, theme" style="flex:none;padding:5px 14px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--muted);font-size:11px;font-weight:800;letter-spacing:0.6px;cursor:pointer;white-space:nowrap" style-hover="border-color:var(--redink);color:var(--redink)">⚙ Settings</button>
+      </sc-if>
+      <sc-if value="{{ mobNav }}" hint-placeholder-val="{{ false }}">
+      <button onClick="{{ toggleMenu }}" aria-label="Menu" style="flex:none;width:44px;height:44px;border:none;background:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:0">
+        <span style="{{ burger1 }}"></span>
+        <span style="{{ burger2 }}"></span>
+      </button>
+      </sc-if>
+    </div>
+    <sc-if value="{{ deskNav }}" hint-placeholder-val="{{ true }}">
+    <div style="max-width:1300px;margin:0 auto;padding:0 16px 10px;display:flex;gap:8px">
+      <button onClick="{{ goDash }}" style="{{ tabDash }}">Dashboard</button>
+      <button onClick="{{ goCal }}" style="{{ tabCal }}">Calendar</button>
+      <button onClick="{{ goMem }}" style="{{ tabMem }}">Members</button>
+    </div>
+    </sc-if>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ toggleMenu }}" style="position:fixed;inset:0;background:rgba(17,17,17,0.5);z-index:90;animation:plmmFade .2s"></div>
+  <div style="position:fixed;top:0;right:0;bottom:0;width:min(290px,82vw);background:var(--card);z-index:95;box-shadow:-12px 0 40px rgba(0,0,0,0.25);padding:18px 16px;display:flex;flex-direction:column;gap:8px;box-sizing:border-box;animation:plmmSlide .25s">
+    <div style="display:flex;align-items:center;gap:10px;padding-bottom:12px;border-bottom:1px solid var(--line2)">
+      <img src="assets/logo.png" alt="" style="height:40px;flex:none">
+      <div style="min-width:0">
+        <div style="font-weight:800;font-size:14.5px;line-height:1.25;color:var(--redink)">Parish Liturgical Music Ministry</div>
+        <div style="font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted2);font-weight:800;line-height:1.5">San Agustin Parish · Parian</div>
+      </div>
+    </div>
+    <button onClick="{{ menuDash }}" style="{{ drawerDash }}">Dashboard</button>
+    <button onClick="{{ menuCal }}" style="{{ drawerCal }}">Calendar</button>
+    <button onClick="{{ menuMem }}" style="{{ drawerMem }}">Members</button>
+    <div style="height:1px;background:var(--line2);margin:6px 0"></div>
+    <button onClick="{{ menuSettings }}" style="{{ drawerBtn }}">⚙ Settings</button>
+    <div style="flex:1"></div>
+    <div style="display:flex;align-items:center;gap:7px;background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:7px 12px">
+      <span style="{{ syncDotStyle }}"></span>
+      <span style="font-size:12px;font-weight:800;color:var(--muted)">{{ syncLabel }}</span>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isDash }}" hint-placeholder-val="{{ true }}">
+  <div data-screen-label="Dashboard" style="max-width:1300px;margin:0 auto;padding:18px 16px 56px;display:flex;flex-direction:column;gap:16px;box-sizing:border-box">
+    <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+      <div style="font-weight:800;font-size:27px">Dashboard</div>
+      <div style="color:var(--muted2);font-size:14px;font-weight:700">{{ todayLong }}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px">
+      <div style="background:var(--card);border:1px solid var(--line);border-radius:13px;padding:13px 15px"><div style="font-weight:800;font-size:26px;line-height:1.1">{{ statMembers }}</div><div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2)">Members</div></div>
+      <div style="background:var(--card);border:1px solid var(--line);border-radius:13px;padding:13px 15px"><div style="font-weight:800;font-size:26px;line-height:1.1">5</div><div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2)">Choir groups</div></div>
+      <div style="background:var(--card);border:1px solid var(--line);border-radius:13px;padding:13px 15px"><div style="font-weight:800;font-size:26px;line-height:1.1">{{ statMonth }}</div><div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2)">Schedules this month</div></div>
+      <div style="background:var(--card);border:1px solid var(--line);border-radius:13px;padding:13px 15px"><div style="{{ statAlertStyle }}">{{ statAlerts }}</div><div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2)">Low-attendance alerts</div></div>
+    </div>
+
+    <sc-if value="{{ hasAlerts }}" hint-placeholder-val="{{ false }}">
+    <div style="background:var(--card);border:1.5px solid #bc0700;border-radius:14px;overflow:hidden">
+      <div style="padding:11px 16px;background:#bc0700;color:#ffffff;font-size:12px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase">Attendance below {{ threshold }}% — action needed</div>
+      <sc-for list="{{ alerts }}" as="al" hint-placeholder-count="1">
+        <div onClick="{{ al.open }}" style="display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--line2);cursor:pointer;flex-wrap:wrap" style-hover="background:var(--redsoft)">
+          <div style="min-width:0;flex:1">
+            <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span style="{{ al.chipStyle }}">{{ al.groupLabel }}</span><span style="font-weight:800;font-size:14px">{{ al.title }}</span></div>
+            <div style="font-size:12.5px;color:var(--muted)">{{ al.sub }}</div>
+          </div>
+          <div style="font-weight:800;font-size:15px;color:var(--redink);flex:none">{{ al.att }} · {{ al.pct }}%</div>
+          <button onClick="{{ al.cancel }}" style="flex:none;padding:7px 14px;border:none;border-radius:999px;background:#bc0700;color:#ffffff;font-size:12px;font-weight:800;cursor:pointer">Cancel schedule</button>
+        </div>
+      </sc-for>
+    </div>
+    </sc-if>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;align-items:start">
+      <div style="background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden">
+        <div style="padding:12px 16px;border-bottom:1px solid var(--line2);display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:12px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted)">Next 7 days</div>
+          <button onClick="{{ goCal }}" style="border:none;background:none;color:var(--redink);font-size:12.5px;font-weight:800;cursor:pointer;padding:0;white-space:nowrap">Open calendar →</button>
+        </div>
+        <sc-for list="{{ upcoming }}" as="u" hint-placeholder-count="4">
+          <div onClick="{{ u.open }}" style="display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--line2);cursor:pointer" style-hover="background:var(--soft)">
+            <div style="width:44px;text-align:center;flex:none">
+              <div style="font-size:10px;font-weight:800;letter-spacing:1px;color:var(--muted2)">{{ u.dow }}</div>
+              <div style="font-weight:800;font-size:21px;line-height:1">{{ u.dayNum }}</div>
+            </div>
+            <div style="min-width:0;flex:1">
+              <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span style="{{ u.chipStyle }}">{{ u.groupLabel }}</span><span style="font-weight:800;font-size:14px">{{ u.title }}</span></div>
+              <div style="font-size:12.5px;color:var(--muted)">{{ u.sub }}</div>
+            </div>
+            <div style="text-align:right;flex:none">
+              <div style="{{ u.attStyle }}">{{ u.att }}</div>
+              <div style="font-size:11px;color:var(--muted2)">{{ u.attSub }}</div>
+            </div>
+          </div>
+        </sc-for>
+        <sc-if value="{{ upcomingEmpty }}" hint-placeholder-val="{{ false }}"><div style="padding:18px;color:var(--muted2);font-size:13.5px">No schedules in the next 7 days. Add one from the Calendar page.</div></sc-if>
+      </div>
+
+      <div style="background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden">
+        <div style="padding:12px 16px;border-bottom:1px solid var(--line2);display:flex;align-items:center;gap:8px">
+          <span style="width:10px;height:10px;border-radius:50%;background:#fdb20b;flex:none"></span>
+          <div style="font-size:12px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted)">Birthdays — next 7 days</div>
+        </div>
+        <sc-for list="{{ bdays }}" as="b" hint-placeholder-count="1">
+          <div style="display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--line2)">
+            <div style="width:44px;text-align:center;flex:none;background:#fdb20b;border-radius:9px;padding:4px 0">
+              <div style="font-size:9.5px;font-weight:800;letter-spacing:0.8px;color:#111111">{{ b.mon }}</div>
+              <div style="font-weight:800;font-size:19px;line-height:1;color:#111111">{{ b.day }}</div>
+            </div>
+            <div style="min-width:0;flex:1">
+              <div style="font-weight:800;font-size:14.5px">{{ b.name }}</div>
+              <div style="font-size:12.5px;color:var(--muted)">{{ b.sub }}</div>
+            </div>
+          </div>
+        </sc-for>
+        <sc-if value="{{ bdaysEmpty }}" hint-placeholder-val="{{ false }}"><div style="padding:18px;color:var(--muted2);font-size:13.5px">No birthdays in the next 7 days.</div></sc-if>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isCal }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Calendar" style="max-width:1300px;margin:0 auto;padding:16px 16px 56px;display:flex;flex-direction:column;gap:12px;box-sizing:border-box">
+
+    <sc-if value="{{ shot }}" hint-placeholder-val="{{ false }}">
+      <button onClick="{{ toggleShot }}" style="align-self:flex-start;padding:7px 16px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);color:var(--muted);font-size:12.5px;font-weight:800;cursor:pointer">← Exit screenshot view</button>
+      <div style="display:flex;align-items:center;gap:13px;padding:4px 2px">
+        <img src="assets/logo.png" alt="" style="height:48px;flex:none">
+        <div>
+          <div style="font-weight:800;font-size:clamp(19px,4.6vw,25px);color:var(--redink);font-weight:700;line-height:1.15">{{ shotTitle }}</div>
+          <div style="font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted2);font-weight:800">Parish Liturgical Music Ministry · San Agustin Parish, Parian</div>
+        </div>
+      </div>
+    </sc-if>
+
+    <div style="display:flex;gap:16px;align-items:flex-start">
+    <sc-if value="{{ calSidebar }}" hint-placeholder-val="{{ false }}">
+    <div style="width:225px;flex:none;display:flex;flex-direction:column;gap:10px">
+      <div style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px">
+        <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px">
+          <div style="font-size:12.5px;font-weight:800;flex:1">{{ miniLabel }}</div>
+          <button onClick="{{ miniPrev }}" style="width:24px;height:24px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);font-size:12px;cursor:pointer;color:var(--muted);padding:0">‹</button>
+          <button onClick="{{ miniNext }}" style="width:24px;height:24px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);font-size:12px;cursor:pointer;color:var(--muted);padding:0">›</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr)">
+          <sc-for list="{{ sideDows }}" as="sd" hint-placeholder-count="7"><div style="{{ sd.style }}">{{ sd.label }}</div></sc-for>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);row-gap:1px">
+          <sc-for list="{{ sideCells }}" as="sc" hint-placeholder-count="35"><div onClick="{{ sc.click }}" style="{{ sc.style }}">{{ sc.num }}</div></sc-for>
+        </div>
+        <div style="font-size:10.5px;color:var(--muted2);margin-top:6px">Click a date to jump the calendar there.</div>
+      </div>
+      <button onClick="{{ addEvent }}" style="padding:11px 18px;border:none;border-radius:12px;background:#bc0700;color:#ffffff;font-size:13.5px;font-weight:800;cursor:pointer;white-space:nowrap" style-hover="background:#a00600">+ Add schedule</button>
+      <button onClick="{{ toggleShot }}" style="padding:10px 16px;border:1.5px solid #bc0700;border-radius:12px;background:var(--card);color:var(--redink);font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap">Screenshot view</button>
+      <div style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:2px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+          <div style="font-size:11px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);flex:1">Choir groups</div>
+          <button onClick="{{ checkAll }}" style="border:none;background:none;color:var(--redink);font-size:11px;font-weight:800;cursor:pointer;padding:0">All</button>
+          <button onClick="{{ checkNone }}" style="border:none;background:none;color:var(--muted2);font-size:11px;font-weight:800;cursor:pointer;padding:0">None</button>
+        </div>
+        <sc-for list="{{ groupChecks }}" as="g" hint-placeholder-count="6">
+          <div draggable="true" onDragStart="{{ g.drag }}" onClick="{{ g.toggle }}" title="Check to show on the calendar · drag onto a date to schedule" style="{{ g.rowStyle }}" style-hover="background:var(--soft)">
+            <span style="{{ g.boxStyle }}">{{ g.mark }}</span>
+            <span style="{{ g.dotStyle }}"></span>
+            <div style="min-width:0;flex:1">
+              <div style="font-size:13px;font-weight:800">{{ g.code }}</div>
+              <div style="font-size:11px;color:var(--muted2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ g.name }}</div>
+            </div>
+          </div>
+        </sc-for>
+        <div style="font-size:11px;color:var(--muted2);margin-top:6px;line-height:1.45">Tip: drag a group onto a calendar date to schedule it there.</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;padding:2px 4px">
+        <div style="font-size:11px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;color:var(--muted2);flex:1">Week starts</div>
+        <div style="display:flex;gap:2px;background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:2px">
+          <sc-for list="{{ wsBtns }}" as="wb" hint-placeholder-count="3"><button onClick="{{ wb.click }}" style="{{ wb.style }}">{{ wb.label }}</button></sc-for>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:12px">
+    <sc-if value="{{ notShot }}" hint-placeholder-val="{{ true }}">
+      <sc-if value="{{ deskToolbar }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div style="position:relative">
+          <button onClick="{{ togglePicker }}" title="Pick month and year" style="display:flex;align-items:baseline;gap:7px;border:none;background:none;cursor:pointer;padding:2px 4px;color:var(--text)">
+            <span style="font-size:clamp(19px,4.5vw,24px);font-weight:800">{{ monthName }}</span>
+            <span style="font-size:clamp(19px,4.5vw,24px);font-weight:400;color:var(--muted)">{{ vyStr }}</span>
+            <span style="font-size:13px;color:var(--muted2)">▾</span>
+          </button>
+          <sc-if value="{{ pickerOpen }}" hint-placeholder-val="{{ false }}">
+            <div onClick="{{ closePicker }}" style="position:fixed;inset:0;z-index:55"></div>
+            <div style="position:absolute;top:44px;left:0;z-index:60;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;box-shadow:0 16px 40px rgba(0,0,0,0.18);width:248px;box-sizing:border-box">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                <button onClick="{{ pkYearDown }}" style="width:28px;height:28px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);font-size:14px;cursor:pointer;color:var(--muted)">‹</button>
+                <div style="flex:1;text-align:center;font-weight:800;font-size:15px">{{ vyStr }}</div>
+                <button onClick="{{ pkYearUp }}" style="width:28px;height:28px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);font-size:14px;cursor:pointer;color:var(--muted)">›</button>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+                <sc-for list="{{ pkMonths }}" as="pm" hint-placeholder-count="12"><button onClick="{{ pm.click }}" style="{{ pm.style }}">{{ pm.label }}</button></sc-for>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+        <button onClick="{{ prevM }}" style="width:34px;height:34px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);font-size:16px;cursor:pointer;color:var(--muted)">‹</button>
+        <button onClick="{{ todayM }}" style="height:34px;padding:0 14px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);font-size:12.5px;font-weight:800;cursor:pointer;color:var(--muted)">Today</button>
+        <button onClick="{{ nextM }}" style="width:34px;height:34px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);font-size:16px;cursor:pointer;color:var(--muted)">›</button>
+        <div style="flex:1"></div>
+        <div style="display:flex;gap:2px;background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:3px">
+          <sc-if value="{{ showWeekSeg }}" hint-placeholder-val="{{ true }}"><button onClick="{{ setWeek }}" style="{{ segWeek }}">Week</button></sc-if>
+          <button onClick="{{ setMonth }}" style="{{ segMonth }}">Month</button>
+          <button onClick="{{ setYear }}" style="{{ segYear }}">Year</button>
+        </div>
+      </div>
+      </sc-if>
+      <sc-if value="{{ mobCalControls }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="position:relative;flex:1;min-width:0">
+            <button onClick="{{ togglePicker }}" title="Pick month and year" style="display:flex;align-items:baseline;gap:7px;border:none;background:none;cursor:pointer;padding:2px 0;color:var(--text)">
+              <span style="font-size:clamp(19px,4.5vw,24px);font-weight:800">{{ monthName }}</span>
+              <span style="font-size:clamp(19px,4.5vw,24px);font-weight:400;color:var(--muted)">{{ vyStr }}</span>
+              <span style="font-size:13px;color:var(--muted2)">▾</span>
+            </button>
+            <sc-if value="{{ pickerOpen }}" hint-placeholder-val="{{ false }}">
+              <div onClick="{{ closePicker }}" style="position:fixed;inset:0;z-index:55"></div>
+              <div style="position:absolute;top:44px;left:0;z-index:60;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;box-shadow:0 16px 40px rgba(0,0,0,0.18);width:248px;box-sizing:border-box">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                  <button onClick="{{ pkYearDown }}" style="width:28px;height:28px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);font-size:14px;cursor:pointer;color:var(--muted)">‹</button>
+                  <div style="flex:1;text-align:center;font-weight:800;font-size:15px">{{ vyStr }}</div>
+                  <button onClick="{{ pkYearUp }}" style="width:28px;height:28px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);font-size:14px;cursor:pointer;color:var(--muted)">›</button>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+                  <sc-for list="{{ pkMonths }}" as="pm" hint-placeholder-count="12"><button onClick="{{ pm.click }}" style="{{ pm.style }}">{{ pm.label }}</button></sc-for>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+          <button onClick="{{ prevM }}" style="width:34px;height:34px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);font-size:16px;cursor:pointer;color:var(--muted);flex:none">‹</button>
+          <button onClick="{{ todayM }}" style="height:34px;padding:0 14px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);font-size:12.5px;font-weight:800;cursor:pointer;color:var(--muted);flex:none">Today</button>
+          <button onClick="{{ nextM }}" style="width:34px;height:34px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);font-size:16px;cursor:pointer;color:var(--muted);flex:none">›</button>
+        </div>
+        <div style="display:flex;justify-content:flex-end">
+          <div style="display:flex;gap:2px;background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:3px">
+            <button onClick="{{ setMonth }}" style="{{ segMonth }}">Month</button>
+            <button onClick="{{ setYear }}" style="{{ segYear }}">Year</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button onClick="{{ addEvent }}" style="flex:1;padding:12px 10px;border:none;border-radius:10px;background:#bc0700;color:#ffffff;font-size:13.5px;font-weight:800;cursor:pointer;white-space:nowrap" style-hover="background:#a00600">+ Add schedule</button>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <sc-for list="{{ groupChecks }}" as="g" hint-placeholder-count="6">
+            <button onClick="{{ g.toggle }}" style="{{ g.pillStyle }}">{{ g.pillLabel }}</button>
+          </sc-for>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12.5px;font-weight:800;color:var(--muted)">
+            <input type="checkbox" checked="{{ legendOn }}" onChange="{{ toggleLegend }}" style="width:15px;height:15px;accent-color:#bc0700">Show legend
+          </label>
+          <div style="flex:1"></div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:10.5px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;color:var(--muted2)">Week starts</span>
+            <div style="display:flex;gap:2px;background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:2px">
+              <sc-for list="{{ wsBtns }}" as="wb" hint-placeholder-count="3"><button onClick="{{ wb.click }}" style="{{ wb.style }}">{{ wb.label }}</button></sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </sc-if>
+
+    <sc-if value="{{ legendOn }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;font-size:11.5px;font-weight:800;color:var(--muted)">
+      <sc-for list="{{ legend }}" as="lg" hint-placeholder-count="6">
+        <span style="display:inline-flex;align-items:center;gap:5px"><span style="{{ lg.dotStyle }}"></span>{{ lg.label }}</span>
+      </sc-for>
+      <span style="color:var(--muted2);font-weight:700">Solid = Mass · Outlined = Rehearsal</span>
+    </div>
+    </sc-if>
+    <sc-if value="{{ deskHint }}" hint-placeholder-val="{{ false }}">
+    <div style="font-size:11.5px;font-weight:800;color:var(--muted2)">Solid = Mass · Outlined = Rehearsal</div>
+    </sc-if>
+
+    <sc-if value="{{ calGrid }}" hint-placeholder-val="{{ true }}">
+    <div style="background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden">
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);background:var(--soft);border-bottom:1px solid var(--line)">
+        <sc-for list="{{ dowHead }}" as="dh" hint-placeholder-count="7"><div style="{{ dh.style }}">{{ dh.label }}</div></sc-for>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr)">
+        <sc-for list="{{ cells }}" as="c" hint-placeholder-count="35">
+          <div onClick="{{ c.click }}" onDragOver="{{ c.dragOver }}" onDrop="{{ c.drop }}" style="{{ c.style }}">
+            <span style="{{ c.numStyle }}">{{ c.num }}</span>
+            <sc-for list="{{ c.bdays }}" as="bd" hint-placeholder-count="0">
+              <div title="{{ bd.title }}" style="background:#fdb20b;color:#111111;border-radius:5px;padding:2px 5px;font-size:10px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ bd.label }}</div>
+            </sc-for>
+            <sc-for list="{{ c.events }}" as="ev" hint-placeholder-count="0">
+              <div onClick="{{ ev.click }}" title="{{ ev.title }}" style="{{ ev.style }}"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">{{ ev.left }}</span><span style="flex:none">{{ ev.right }}</span></div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <sc-if value="{{ notShot }}" hint-placeholder-val="{{ true }}">
+      <div style="font-size:12.5px;color:var(--muted2)">Tap a day to see its schedules or add one. Tap a colored entry to open it — log absences, pick instrumentalists, or cancel.</div>
+    </sc-if>
+    </sc-if>
+    <sc-if value="{{ calAgenda }}" hint-placeholder-val="{{ false }}">
+      <div style="background:var(--card);border:1px solid var(--line);border-radius:16px;padding:8px 6px 10px">
+        <div style="display:grid;grid-template-columns:repeat(7,1fr)">
+          <sc-for list="{{ miniDows }}" as="md" hint-placeholder-count="7"><div style="{{ md.style }}">{{ md.label }}</div></sc-for>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);row-gap:2px">
+          <sc-for list="{{ miniCells }}" as="mc" hint-placeholder-count="35">
+            <div onClick="{{ mc.click }}" style="{{ mc.style }}">
+              <span style="{{ mc.numStyle }}">{{ mc.num }}</span>
+              <div style="display:flex;gap:3px;height:6px;align-items:center">
+                <sc-for list="{{ mc.dots }}" as="dt" hint-placeholder-count="0"><span style="{{ dt.style }}"></span></sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <sc-for list="{{ agendaDays }}" as="ad" hint-placeholder-count="2">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="{{ ad.labelStyle }}">{{ ad.label }}</div>
+              <div style="flex:1;height:1px;background:var(--line2)"></div>
+              <button onClick="{{ ad.add }}" title="Add schedule on this day" style="width:26px;height:26px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);color:var(--muted);font-size:15px;font-weight:800;cursor:pointer;line-height:1">+</button>
+            </div>
+            <sc-for list="{{ ad.items }}" as="it" hint-placeholder-count="1">
+              <sc-if value="{{ it.isB }}" hint-placeholder-val="{{ false }}">
+                <div style="background:#fdb20b;color:#111111;border-radius:10px;padding:9px 12px;font-size:13.5px;font-weight:800">{{ it.label }}</div>
+              </sc-if>
+              <sc-if value="{{ it.isEv }}" hint-placeholder-val="{{ true }}">
+                <div onClick="{{ it.click }}" style="display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer">
+                  <div style="{{ it.accent }}"></div>
+                  <div style="width:72px;flex:none;font-size:12.5px;font-weight:700;color:var(--muted)">{{ it.time }}</div>
+                  <div style="flex:1;min-width:0">
+                    <div style="{{ it.titleStyle }}">{{ it.title }}</div>
+                    <div style="font-size:12.5px;color:var(--muted2)">{{ it.sub }}</div>
+                    <sc-if value="{{ it.hasInst }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:var(--redink);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ it.instLine }}</div></sc-if>
+                  </div>
+                  <sc-if value="{{ it.showLow }}" hint-placeholder-val="{{ false }}"><span style="background:#bc0700;color:#ffffff;border-radius:6px;padding:2px 7px;font-size:10px;font-weight:800;flex:none;letter-spacing:0.5px">LOW</span></sc-if>
+                  <span style="{{ it.attStyle }}">{{ it.att }}</span>
+                </div>
+              </sc-if>
+            </sc-for>
+          </div>
+        </sc-for>
+        <sc-if value="{{ agendaEmpty }}" hint-placeholder-val="{{ false }}"><div style="color:var(--muted2);font-size:14px">No schedules from the selected day to month's end. Tap a + button or "+ Add schedule".</div></sc-if>
+      </div>
+    </sc-if>
+    <sc-if value="{{ calWeek }}" hint-placeholder-val="{{ false }}">
+      <div style="background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden">
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);background:var(--soft);border-bottom:1px solid var(--line)">
+          <sc-for list="{{ weekHead }}" as="wh" hint-placeholder-count="7"><div style="{{ wh.style }}">{{ wh.label }}</div></sc-for>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr)">
+          <sc-for list="{{ weekCells }}" as="wc" hint-placeholder-count="7">
+            <div onClick="{{ wc.click }}" onDragOver="{{ wc.dragOver }}" onDrop="{{ wc.drop }}" style="{{ wc.style }}">
+              <sc-for list="{{ wc.bdays }}" as="wb" hint-placeholder-count="0"><div style="background:#fdb20b;color:#111111;border-radius:6px;padding:3px 6px;font-size:11px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ wb.label }}</div></sc-for>
+              <sc-for list="{{ wc.events }}" as="we" hint-placeholder-count="0">
+                <div onClick="{{ we.click }}" title="{{ we.title }}" style="{{ we.style }}">
+                  <div style="font-weight:800;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ we.l1 }}</div>
+                  <div style="font-size:11px;opacity:0.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ we.l2 }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="font-size:12.5px;color:var(--muted2)">Tap a day to see its schedules or add one. Drag a group from the left onto a day to schedule it.</div>
+    </sc-if>
+    <sc-if value="{{ calYear }}" hint-placeholder-val="{{ false }}">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px">
+        <sc-for list="{{ yearMonths }}" as="ym" hint-placeholder-count="12">
+          <div style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px">
+            <button onClick="{{ ym.open }}" style="border:none;background:none;color:var(--redink);font-weight:800;font-size:13px;cursor:pointer;padding:0;margin-bottom:6px">{{ ym.label }}</button>
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px">
+              <sc-for list="{{ ym.days }}" as="yd" hint-placeholder-count="35">
+                <div onClick="{{ yd.click }}" title="{{ yd.title }}" style="{{ yd.style }}">{{ yd.num }}</div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="font-size:12.5px;color:var(--muted2)">Colored days have schedules — tap one to open it. Gold days are birthdays.</div>
+    </sc-if>
+    </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isMembers }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Members" style="max-width:1300px;margin:0 auto;padding:16px 16px 56px;display:flex;flex-direction:column;gap:12px;box-sizing:border-box">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <div style="font-weight:800;font-size:25px">Members Database</div>
+      <div style="flex:1"></div>
+      <button onClick="{{ addMember }}" style="padding:9px 18px;border:none;border-radius:999px;background:#bc0700;color:#ffffff;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap" style-hover="background:#a00600">+ Add member</button>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <input placeholder="Search by name or role…" onChange="{{ onSearch }}" style="flex:1;min-width:170px;box-sizing:border-box;padding:9px 12px;border:1px solid var(--bstrong);border-radius:999px;font-size:14px;background:var(--card)">
+      <button onClick="{{ toggleSort }}" title="Toggle sort order" style="height:38px;padding:0 16px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);color:var(--muted);font-size:12.5px;font-weight:800;cursor:pointer;white-space:nowrap">Sort: {{ sortLabel }}</button>
+      <button onClick="{{ toggleMf }}" style="height:38px;padding:0 16px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);color:var(--muted);font-size:12.5px;font-weight:800;cursor:pointer;white-space:nowrap">{{ mfLabel }}</button>
+    </div>
+    <sc-if value="{{ mfShow }}" hint-placeholder-val="{{ true }}">
+    <div style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center">
+        <span style="font-size:10.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted2);width:48px;flex:none">Group</span>
+        <sc-for list="{{ memberChips }}" as="g" hint-placeholder-count="6">
+          <button onClick="{{ g.click }}" style="{{ g.style }}"><span style="{{ g.dotStyle }}"></span>{{ g.label }}</button>
+        </sc-for>
+      </div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center">
+        <span style="font-size:10.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted2);width:48px;flex:none">Voice</span>
+        <sc-for list="{{ voiceChips }}" as="vc" hint-placeholder-count="5">
+          <button onClick="{{ vc.click }}" style="{{ vc.style }}">{{ vc.label }}</button>
+        </sc-for>
+        <button onClick="{{ instChip.click }}" style="{{ instChip.style }}">{{ instChip.label }}</button>
+      </div>
+    </div>
+    </sc-if>
+    <div style="font-size:14px;font-weight:800;color:var(--muted)">{{ mcountLine }}</div>
+    <div style="background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden">
+      <sc-for list="{{ mrows }}" as="m" hint-placeholder-count="4">
+        <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line2);flex-wrap:wrap">
+          <div style="flex:1;min-width:150px">
+            <div style="font-weight:800;font-size:15px">{{ m.name }}</div>
+            <div style="font-size:12.5px;color:var(--muted)">{{ m.meta }}</div>
+          </div>
+          <span style="{{ m.chipStyle }}">{{ m.group }}</span>
+          <button onClick="{{ m.edit }}" style="padding:6px 14px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);color:var(--muted);font-size:12px;font-weight:800;cursor:pointer" style-hover="border-color:var(--redink);color:var(--redink)">Edit</button>
+        </div>
+      </sc-for>
+      <sc-if value="{{ mrowsEmpty }}" hint-placeholder-val="{{ false }}"><div style="padding:18px;color:var(--muted2);font-size:13.5px">No members found. Add one with the button above.</div></sc-if>
+    </div>
+    <div style="font-size:12.5px;color:var(--muted2)">Members tagged as instrumentalists can be assigned to any mass or rehearsal from the schedule's page.</div>
+  </div>
+  </sc-if>
+
+</div>
+</sc-if>
+
+<sc-if value="{{ mDay }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ closeModal }}" style="position:fixed;inset:0;background:rgba(17,17,17,0.55);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box">
+  <div onClick="{{ stopProp }}" style="background:var(--card);border-radius:16px;width:min(480px,100%);max-height:86vh;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:12px;box-sizing:border-box">
+    <div style="font-weight:800;font-size:21px">{{ dayTitle }}</div>
+    <sc-for list="{{ dayBdays }}" as="b" hint-placeholder-count="0">
+      <div style="background:#fdb20b;border-radius:9px;padding:8px 12px;font-size:13px;font-weight:800;color:#111111">Birthday — {{ b.label }}</div>
+    </sc-for>
+    <sc-for list="{{ dayEvents }}" as="d" hint-placeholder-count="1">
+      <div onClick="{{ d.open }}" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:11px;cursor:pointer" style-hover="border-color:var(--redink)">
+        <span style="{{ d.chipStyle }}">{{ d.groupLabel }}</span>
+        <div style="min-width:0;flex:1">
+          <div style="font-weight:800;font-size:14px">{{ d.title }}</div>
+          <div style="font-size:12px;color:var(--muted)">{{ d.sub }}</div>
+          <sc-if value="{{ d.hasInst }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:var(--redink);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.instLine }}</div></sc-if>
+        </div>
+        <div style="{{ d.attStyle }}">{{ d.att }}</div>
+      </div>
+    </sc-for>
+    <sc-if value="{{ dayEmpty }}" hint-placeholder-val="{{ false }}"><div style="color:var(--muted2);font-size:13.5px">No schedules on this day yet.</div></sc-if>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button onClick="{{ closeModal }}" style="padding:9px 16px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);color:var(--muted);font-size:13px;font-weight:800;cursor:pointer">Close</button>
+      <button onClick="{{ dayAdd }}" style="padding:9px 16px;border:none;border-radius:999px;background:#bc0700;color:#ffffff;font-size:13px;font-weight:800;cursor:pointer">+ Add schedule</button>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ mEvent }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ closeModal }}" style="position:fixed;inset:0;background:rgba(17,17,17,0.55);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box">
+  <div onClick="{{ stopProp }}" style="background:var(--card);border-radius:16px;width:min(560px,100%);max-height:88vh;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:14px;box-sizing:border-box">
+    <div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="{{ evChipStyle }}">{{ evGroupLabel }}</span>
+        <div style="font-weight:800;font-size:22px">{{ evTitle }}</div>
+      </div>
+      <div style="font-size:13.5px;color:var(--muted);margin-top:3px">{{ evWhen }}</div>
+      <sc-if value="{{ evHasOccasion }}" hint-placeholder-val="{{ false }}"><div style="font-size:13.5px;color:var(--text);font-weight:700;margin-top:2px">{{ evOccasion }}</div></sc-if>
+    </div>
+
+    <sc-if value="{{ evCancelled }}" hint-placeholder-val="{{ false }}">
+      <div style="background:var(--line2);border-radius:11px;padding:11px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <div style="flex:1;font-size:13.5px;font-weight:800;color:var(--muted)">This schedule is CANCELLED.</div>
+        <button onClick="{{ evRestore }}" style="padding:7px 14px;border:1.5px solid #bc0700;border-radius:999px;background:var(--card);color:var(--redink);font-size:12px;font-weight:800;cursor:pointer">Restore</button>
+      </div>
+    </sc-if>
+
+    <div style="border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:9px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap">
+        <div style="font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted2)">Attendance</div>
+        <div><span style="{{ evAttStyle }}">{{ evAtt }}</span> <span style="font-size:12.5px;color:var(--muted);font-weight:700">attending · {{ evPct }}%</span></div>
+      </div>
+      <div style="height:8px;background:var(--line2);border-radius:999px;overflow:hidden"><div style="{{ evBarStyle }}"></div></div>
+      <sc-if value="{{ evLow }}" hint-placeholder-val="{{ false }}">
+        <div style="background:var(--redsoft);border:1px solid #bc0700;border-radius:10px;padding:11px 13px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <div style="flex:1;min-width:170px;font-size:13px;font-weight:700;color:var(--redink)">Attendance fell below {{ threshold }}% of the expected {{ evExpected }}. You may cancel this schedule.</div>
+          <button onClick="{{ evCancel }}" style="padding:8px 15px;border:none;border-radius:999px;background:#bc0700;color:#ffffff;font-size:12.5px;font-weight:800;cursor:pointer">Cancel schedule</button>
+        </div>
+      </sc-if>
+    </div>
+
+    <div style="border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:9px">
+      <div style="font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted2)">Absences ({{ evAbsCount }})</div>
+      <sc-for list="{{ evAbs }}" as="a" hint-placeholder-count="0">
+        <div style="display:flex;align-items:center;gap:8px;background:var(--soft);border-radius:9px;padding:7px 11px">
+          <div style="flex:1;font-size:13.5px;font-weight:700">{{ a.label }}</div>
+          <button onClick="{{ a.remove }}" title="Remove absence" style="border:none;background:none;color:var(--redink);font-size:15px;font-weight:800;cursor:pointer;padding:0 4px">×</button>
+        </div>
+      </sc-for>
+      <div style="display:flex;flex-direction:column;gap:7px">
+        <select ref="{{ absSelRef }}" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid var(--bstrong);border-radius:9px;font-size:13.5px;background:var(--card)">
+          <option value="">Select member…</option>
+          <sc-for list="{{ evAbsOptions }}" as="o" hint-placeholder-count="0"><option value="{{ o.name }}">{{ o.label }}</option></sc-for>
+        </select>
+        <div style="display:flex;gap:7px;flex-wrap:wrap">
+          <input ref="{{ absNameRef }}" placeholder="…or type a name" style="flex:1;min-width:120px;box-sizing:border-box;padding:9px 10px;border:1px solid var(--bstrong);border-radius:9px;font-size:13.5px">
+          <input ref="{{ absReasonRef }}" placeholder="Reason (optional)" style="flex:1;min-width:120px;box-sizing:border-box;padding:9px 10px;border:1px solid var(--bstrong);border-radius:9px;font-size:13.5px">
+          <button onClick="{{ addAbsence }}" style="padding:9px 15px;border:1.5px solid #bc0700;border-radius:999px;background:var(--card);color:var(--redink);font-size:12.5px;font-weight:800;cursor:pointer">Log absence</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:9px">
+      <div style="font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted2)">Instrumentalists</div>
+      <sc-if value="{{ evNoInstOptions }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:var(--muted2)">No members are tagged as instrumentalists yet. Tag them in the Members page first.</div></sc-if>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <sc-for list="{{ evInstOptions }}" as="i" hint-placeholder-count="0">
+          <button onClick="{{ i.toggle }}" style="{{ i.style }}">{{ i.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+      <button onClick="{{ evDelete }}" style="padding:9px 15px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);color:var(--redink);font-size:13px;font-weight:800;cursor:pointer">{{ evDeleteLabel }}</button>
+      <div style="flex:1"></div>
+      <button onClick="{{ evEdit }}" style="padding:9px 16px;border:1.5px solid #bc0700;border-radius:999px;background:var(--card);color:var(--redink);font-size:13px;font-weight:800;cursor:pointer">Edit details</button>
+      <button onClick="{{ closeModal }}" style="padding:9px 18px;border:none;border-radius:999px;background:#111111;color:#ffffff;font-size:13px;font-weight:800;cursor:pointer">Close</button>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ mEform }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ closeModal }}" style="position:fixed;inset:0;background:rgba(17,17,17,0.55);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box">
+  <div onClick="{{ stopProp }}" style="background:var(--card);border-radius:16px;width:min(520px,100%);max-height:88vh;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:13px;box-sizing:border-box">
+    <div style="font-weight:800;font-size:22px">{{ eformTitle }}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:11px">
+      <div style="min-width:0"><div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Date</div><input name="date" type="date" defaultValue="{{ fDate }}" onChange="{{ onF }}" style="display:block;width:100%;min-width:0;max-width:100%;box-sizing:border-box;padding:9px 10px;height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:14px;background:var(--card);text-align:left"></div>
+      <div style="min-width:0"><div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Time</div><input name="time" type="time" defaultValue="{{ fTime }}" onChange="{{ onF }}" style="display:block;width:100%;min-width:0;max-width:100%;box-sizing:border-box;padding:9px 10px;height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:14px;background:var(--card);text-align:left"></div>
+      <div style="min-width:0"><div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Type</div><select name="type" defaultValue="{{ fType }}" onChange="{{ onF }}" style="width:100%;min-width:0;box-sizing:border-box;padding:9px 10px;min-height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:14px;background:var(--card)"><option value="mass">Mass</option><option value="rehearsal">Rehearsal</option></select></div>
+      <div style="min-width:0"><div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Choir group</div><select name="group" defaultValue="{{ fGroup }}" onChange="{{ onF }}" style="width:100%;min-width:0;box-sizing:border-box;padding:9px 10px;min-height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:14px;background:var(--card)"><option value="">Grand Choir</option><option value="CSA">CSA — Coro ni San Agustin</option><option value="SAC">SAC — St. Ambrose Choir</option><option value="SMC">SMC — Sta. Monica Choir</option><option value="HSR">HSR — Himig Sta. Rita</option><option value="SCC">SCC — San Cristobal Choir</option></select></div>
+      <div style="grid-column:1/-1"><div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Venue</div><input name="venue" defaultValue="{{ fVenue }}" onChange="{{ onF }}" placeholder="Leave blank to use the group's usual venue" style="width:100%;min-width:0;box-sizing:border-box;padding:9px 10px;min-height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:14px"></div>
+      <div style="grid-column:1/-1"><div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Occasion (optional)</div><input name="occasion" defaultValue="{{ fOccasion }}" onChange="{{ onF }}" placeholder="e.g. Feast of San Agustin, Anticipated Mass" style="width:100%;min-width:0;box-sizing:border-box;padding:9px 10px;min-height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:14px"></div>
+      <div style="min-width:0"><div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Expected attendees</div><input name="expected" type="number" min="1" defaultValue="{{ fExpected }}" onChange="{{ onF }}" style="width:100%;min-width:0;box-sizing:border-box;padding:9px 10px;min-height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:14px"></div>
+    </div>
+    <sc-if value="{{ formError }}" hint-placeholder-val="{{ false }}"><div style="color:var(--redink);font-size:13px;font-weight:700">{{ formErrorMsg }}</div></sc-if>
+    <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+      <button onClick="{{ closeModal }}" style="min-height:44px;padding:0 18px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);color:var(--muted);font-size:13px;font-weight:800;cursor:pointer">Cancel</button>
+      <button onClick="{{ saveEform }}" style="min-height:44px;padding:0 22px;border:none;border-radius:999px;background:#bc0700;color:#ffffff;font-size:13px;font-weight:800;cursor:pointer">Save schedule</button>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ mMform }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ closeModal }}" style="position:fixed;inset:0;background:rgba(17,17,17,0.55);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box">
+  <div onClick="{{ stopProp }}" style="background:var(--card);border-radius:16px;width:min(520px,100%);max-height:88vh;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:13px;box-sizing:border-box">
+    <div style="font-weight:800;font-size:22px">{{ mformTitle }}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:11px">
+      <div style="grid-column:1/-1"><div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Full name</div><input name="name" defaultValue="{{ fName }}" onChange="{{ onF }}" placeholder="Member name" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid var(--bstrong);border-radius:9px;font-size:14px"></div>
+      <div style="min-width:0"><div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Choir group</div><select name="group" defaultValue="{{ fGroup }}" onChange="{{ onF }}" style="width:100%;min-width:0;box-sizing:border-box;padding:9px 10px;min-height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:14px;background:var(--card)"><option value="CSA">CSA — Coro ni San Agustin</option><option value="SAC">SAC — St. Ambrose Choir</option><option value="SMC">SMC — Sta. Monica Choir</option><option value="HSR">HSR — Himig Sta. Rita</option><option value="SCC">SCC — San Cristobal Choir</option></select></div>
+      <div style="min-width:0"><div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Voice part</div><select name="voice" defaultValue="{{ fVoice }}" onChange="{{ onF }}" style="width:100%;min-width:0;box-sizing:border-box;padding:9px 10px;min-height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:14px;background:var(--card)"><option value="">—</option><option value="Soprano">Soprano</option><option value="Alto">Alto</option><option value="Tenor">Tenor</option><option value="Bass">Bass</option></select></div>
+      <div style="grid-column:1/-1"><div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Role</div><input name="role" defaultValue="{{ fRole }}" onChange="{{ onF }}" placeholder="e.g. Member, Coordinator, PLMM Secretary" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid var(--bstrong);border-radius:9px;font-size:14px"></div>
+      <div style="grid-column:1/-1;min-width:0">
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Birthday <span style="font-weight:700;text-transform:none;letter-spacing:0">(optional — no year needed)</span></div>
+        <div style="display:flex;gap:7px">
+          <input ref="{{ bdayInputRef }}" defaultValue="{{ fBdayText }}" placeholder="{{ bdayPlaceholder }}" onBlur="{{ onBdayBlur }}" onKeyDown="{{ onBdayKey }}" style="flex:1;min-width:0;box-sizing:border-box;padding:9px 10px;min-height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:14px">
+          <button onClick="{{ toggleBdayPicker }}" title="Pick from calendar" style="flex:none;min-width:48px;min-height:44px;padding:0 12px;border:1px solid var(--bstrong);border-radius:9px;background:var(--soft);color:var(--muted);font-size:15px;font-weight:800;cursor:pointer" style-hover="border-color:var(--redink);color:var(--redink)">▦</button>
+        </div>
+        <sc-if value="{{ bdayErr }}" hint-placeholder-val="{{ false }}"><div style="color:var(--redink);font-size:12px;font-weight:700;margin-top:4px">Couldn't read that date — try "{{ bdayExample }}" or "3/9", or use the calendar.</div></sc-if>
+        <sc-if value="{{ bdayPickerOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:7px;border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--soft);box-sizing:border-box">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <button onClick="{{ bpPrev }}" style="width:36px;height:36px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);font-size:15px;cursor:pointer;color:var(--muted);flex:none">‹</button>
+            <div style="flex:1;text-align:center;font-weight:800;font-size:15px">{{ bpMonthLabel }}</div>
+            <button onClick="{{ bpNext }}" style="width:36px;height:36px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);font-size:15px;cursor:pointer;color:var(--muted);flex:none">›</button>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">
+            <sc-for list="{{ bpDays }}" as="bd" hint-placeholder-count="31"><button onClick="{{ bd.click }}" style="{{ bd.style }}">{{ bd.num }}</button></sc-for>
+          </div>
+          <div style="display:flex;justify-content:space-between;gap:8px;margin-top:9px">
+            <button onClick="{{ bpClear }}" style="min-height:38px;padding:0 14px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);color:var(--muted);font-size:12px;font-weight:800;cursor:pointer">Clear birthday</button>
+            <button onClick="{{ bpClose }}" style="min-height:38px;padding:0 16px;border:none;border-radius:999px;background:#111111;color:#ffffff;font-size:12px;font-weight:800;cursor:pointer">Done</button>
+          </div>
+        </div>
+        </sc-if>
+      </div>
+      <div style="grid-column:1/-1;display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--soft);border-radius:10px;padding:10px 12px">
+        <label style="display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:800;cursor:pointer"><input name="instrumentalist" type="checkbox" defaultChecked="{{ fInst }}" onChange="{{ onF }}" style="width:17px;height:17px;accent-color:var(--redink)">Instrumentalist</label>
+        <input name="instrument" defaultValue="{{ fInstrument }}" onChange="{{ onF }}" placeholder="Instrument (e.g. Guitar, Keyboard)" style="flex:1;min-width:150px;box-sizing:border-box;padding:8px 10px;border:1px solid var(--bstrong);border-radius:9px;font-size:13.5px">
+      </div>
+    </div>
+    <sc-if value="{{ formError }}" hint-placeholder-val="{{ false }}"><div style="color:var(--redink);font-size:13px;font-weight:700">{{ formErrorMsg }}</div></sc-if>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <sc-if value="{{ mformCanDelete }}" hint-placeholder-val="{{ false }}"><button onClick="{{ deleteMember }}" style="padding:9px 15px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);color:var(--redink);font-size:13px;font-weight:800;cursor:pointer">{{ memDeleteLabel }}</button></sc-if>
+      <div style="flex:1"></div>
+      <button onClick="{{ closeModal }}" style="padding:9px 16px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);color:var(--muted);font-size:13px;font-weight:800;cursor:pointer">Cancel</button>
+      <button onClick="{{ saveMform }}" style="padding:9px 20px;border:none;border-radius:999px;background:#bc0700;color:#ffffff;font-size:13px;font-weight:800;cursor:pointer">Save member</button>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ mSettings }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ closeModal }}" style="position:fixed;inset:0;background:rgba(17,17,17,0.55);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box">
+  <div onClick="{{ stopProp }}" style="background:var(--card);border-radius:16px;width:min(460px,100%);max-height:88vh;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:13px;box-sizing:border-box">
+    <div style="font-weight:800;font-size:21px">Settings</div>
+    <div style="border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:11px">
+      <div style="font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted2)">Attendance rules</div>
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14px;font-weight:800">Cancellation threshold</div>
+          <div style="font-size:12px;color:var(--muted2);line-height:1.5">Flag a schedule and offer to cancel it when attendance falls below this share of the expected count.</div>
+        </div>
+        <div style="font-weight:800;font-size:22px;color:var(--redink);flex:none;min-width:56px;text-align:right">{{ setThreshold }}%</div>
+      </div>
+      <input type="range" min="20" max="80" step="5" value="{{ setThreshold }}" onChange="{{ onThDrag }}" onMouseUp="{{ onThCommit }}" onTouchEnd="{{ onThCommit }}" onKeyUp="{{ onThCommit }}" style="width:100%;box-sizing:border-box;accent-color:#bc0700;min-height:32px;margin:0;cursor:pointer">
+      <div style="display:flex;align-items:center;gap:10px;border-top:1px solid var(--line2);padding-top:11px;flex-wrap:wrap">
+        <div style="flex:1;min-width:150px">
+          <div style="font-size:14px;font-weight:800">Default expected attendees</div>
+          <div style="font-size:12px;color:var(--muted2);line-height:1.5">Pre-filled when adding a new schedule.</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;flex:none">
+          <button onClick="{{ expMinus }}" style="width:40px;height:40px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);color:var(--muted);font-size:18px;font-weight:800;cursor:pointer;line-height:1">−</button>
+          <div style="font-weight:800;font-size:18px;min-width:32px;text-align:center">{{ setExpected }}</div>
+          <button onClick="{{ expPlus }}" style="width:40px;height:40px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);color:var(--muted);font-size:18px;font-weight:800;cursor:pointer;line-height:1">+</button>
+        </div>
+      </div>
+    </div>
+    <div style="border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:11px">
+      <div style="font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted2)">Appearance &amp; security</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="flex:1;min-width:0;font-size:14px;font-weight:800">Theme</div>
+        <button onClick="{{ toggleTheme }}" style="flex:none;min-height:40px;padding:0 16px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);color:var(--muted);font-size:12.5px;font-weight:800;cursor:pointer" style-hover="border-color:var(--redink);color:var(--redink)">{{ themeLabel }}</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="flex:1;min-width:0;font-size:14px;font-weight:800">Admin PIN</div>
+        <button onClick="{{ openPin }}" style="flex:none;min-height:40px;padding:0 16px;border:1.5px solid #bc0700;border-radius:999px;background:var(--card);color:var(--redink);font-size:12.5px;font-weight:800;cursor:pointer">Change PIN…</button>
+      </div>
+    </div>
+    <div style="font-size:11.5px;color:var(--muted2);line-height:1.5">Attendance rules and the PIN apply to every admin when cloud sync is on. Theme is saved per device.</div>
+    <div style="display:flex;justify-content:flex-end">
+      <button onClick="{{ closeModal }}" style="min-height:44px;padding:0 22px;border:none;border-radius:999px;background:#111111;color:#ffffff;font-size:13px;font-weight:800;cursor:pointer">Done</button>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ mPin }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ closeModal }}" style="position:fixed;inset:0;background:rgba(17,17,17,0.55);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box">
+  <div onClick="{{ stopProp }}" style="background:var(--card);border-radius:16px;width:min(380px,100%);padding:20px;display:flex;flex-direction:column;gap:12px;box-sizing:border-box">
+    <div style="font-weight:800;font-size:21px">Change PIN</div>
+    <div style="font-size:12.5px;color:var(--muted)">The PIN is shared by all admins and coordinators. When cloud sync is on, changing it here changes it for everyone.</div>
+    <input ref="{{ pinCurRef }}" type="password" placeholder="Current PIN" style="width:100%;box-sizing:border-box;padding:10px 11px;border:1px solid var(--bstrong);border-radius:9px;font-size:15px">
+    <input ref="{{ pinNewRef }}" type="password" placeholder="New PIN (at least 4 characters)" style="width:100%;box-sizing:border-box;padding:10px 11px;border:1px solid var(--bstrong);border-radius:9px;font-size:15px">
+    <sc-if value="{{ formError }}" hint-placeholder-val="{{ false }}"><div style="color:var(--redink);font-size:13px;font-weight:700">{{ formErrorMsg }}</div></sc-if>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button onClick="{{ closeModal }}" style="padding:9px 16px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);color:var(--muted);font-size:13px;font-weight:800;cursor:pointer">Cancel</button>
+      <button onClick="{{ savePin }}" style="padding:9px 20px;border:none;border-radius:999px;background:#bc0700;color:#ffffff;font-size:13px;font-weight:800;cursor:pointer">Save PIN</button>
+    </div>
+  </div>
+</div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;cancelThreshold&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:40,&quot;min&quot;:20,&quot;max&quot;:80,&quot;step&quot;:5,&quot;unit&quot;:&quot;%&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Rules&quot;},&quot;defaultExpected&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:10,&quot;min&quot;:1,&quot;max&quot;:60,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Rules&quot;},&quot;requirePin&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Security&quot;}}">
+class Component extends DCLogic {
+  state = this.boot();
+
+  boot() {
+    let store = null;
+    try { store = JSON.parse(localStorage.getItem('plmm-data-v1')); } catch (e) {}
+    if (!store || !Array.isArray(store.members)) store = this.seed();
+    if (!store.settings) store.settings = { pin: '1234' };
+    let unlocked = false;
+    try { unlocked = sessionStorage.getItem('plmm-unlocked') === '1'; } catch (e) {}
+    let theme = 'light';
+    try { theme = localStorage.getItem('plmm-theme') || 'light'; } catch (e) {}
+    let ws0 = 0;
+    try { ws0 = Number(localStorage.getItem('plmm-weekstart')) || 0; } catch (e) {}
+    const t = new Date();
+    return { store, unlocked, theme, isMobile: (typeof window !== 'undefined' && window.innerWidth < 760), selDay: this.ds(t), page: 'dash', vy: t.getFullYear(), vm: t.getMonth(), checks: { CSA: true, SAC: true, SMC: true, HSR: true, SCC: true, GC: true }, calView: 'month', showLegend: true, menuOpen: false, weekStartDow: ws0, miniVm: t.getMonth(), miniVy: t.getFullYear(), pickerOpen: false, mvoice: 'ALL', minst: false, msort: 'az', filter: 'ALL', mfilter: 'ALL', q: '', shot: false, modal: null, pinError: false, formError: '', confirm: false, sync: 'local' };
+  }
+
+  GROUPS() {
+    return [
+      { code: 'CSA', name: 'Coro ni San Agustin', color: '#bc0700', venue: 'San Agustin Parish' },
+      { code: 'SAC', name: 'St. Ambrose Choir', color: '#e09600', venue: 'St. Ambrose Chapel' },
+      { code: 'SMC', name: 'Sta. Monica Choir', color: '#fc4c0e', venue: 'San Agustin Parish' },
+      { code: 'HSR', name: 'Himig Sta. Rita', color: '#a3264d', venue: 'San Agustin Parish' },
+      { code: 'SCC', name: 'San Cristobal Choir', color: '#7c4a03', venue: 'San Cristobal Chapel' }
+    ];
+  }
+  G(code) { return this.GROUPS().find(g => g.code === code) || null; }
+  gColor(code) { const g = this.G(code); return g ? g.color : '#6d3fae'; }
+  gLabel(code) { return code || 'GC'; }
+  gName(code) { const g = this.G(code); return g ? g.name : 'Grand Choir'; }
+
+  seed() {
+    const mk = (date, time, group, venue, expected) => ({ id: 'e' + date + time.replace(':', ''), date, time, type: 'mass', group, venue, occasion: '', expected, absences: [], insts: [], status: 'active' });
+    const sundays = ['2026-07-19', '2026-07-26'];
+    const events = [];
+    sundays.forEach(d => {
+      events.push(mk(d, '06:00', 'SCC', 'San Cristobal Chapel', 8));
+      events.push(mk(d, '07:00', '', 'San Agustin Parish', 10));
+      events.push(mk(d, '09:00', '', 'San Agustin Parish', 10));
+      events.push(mk(d, '15:30', 'SAC', 'St. Ambrose Chapel', 10));
+      events.push(mk(d, '17:00', '', 'San Agustin Parish', 10));
+    });
+    return {
+      members: [
+        { id: 'm1', name: 'Edward Munda', group: 'CSA', voice: 'Bass', role: 'CSA Coordinator', bMonth: 0, bDay: 0, instrumentalist: false, instrument: '' },
+        { id: 'm2', name: 'Adrienne', group: 'SAC', voice: 'Alto', role: 'PLMM Secretary (Coordinator)', bMonth: 3, bDay: 9, instrumentalist: false, instrument: '' },
+        { id: 'm3', name: 'Joymarie', group: 'SAC', voice: 'Soprano', role: 'PLMM Head Coordinator', bMonth: 1, bDay: 1, instrumentalist: false, instrument: '' },
+        { id: 'm4', name: 'Mars', group: 'CSA', voice: 'Alto', role: 'PLMM Vice Head Coordinator', bMonth: 0, bDay: 0, instrumentalist: false, instrument: '' }
+      ],
+      events,
+      settings: { pin: '1234' }
+    };
+  }
+
+  componentDidMount() {
+    try { localStorage.setItem('plmm-data-v1', JSON.stringify(this.state.store)); } catch (e) {}
+    try { document.body.classList.toggle('dark', this.state.theme === 'dark'); } catch (e) {}
+    this._onRes = () => { const m = window.innerWidth < 760; if (m !== this.state.isMobile) this.setState({ isMobile: m }); };
+    window.addEventListener('resize', this._onRes);
+    this.initCloud();
+  }
+
+  initCloud() {
+    const cfg = window.PLMM_FIREBASE_CONFIG;
+    if (!cfg || typeof firebase === 'undefined') return;
+    try {
+      if (!firebase.apps.length) firebase.initializeApp(cfg);
+      this.docRef = firebase.firestore().collection('plmm').doc('data');
+      this.docRef.onSnapshot(snap => {
+        if (snap.metadata.hasPendingWrites) { this.setState({ sync: 'cloud' }); return; }
+        if (snap.exists) {
+          const data = snap.data();
+          if (data && Array.isArray(data.members)) {
+            this.setState({ store: data, sync: 'cloud' });
+            try { localStorage.setItem('plmm-data-v1', JSON.stringify(data)); } catch (e) {}
+          }
+        } else {
+          this.docRef.set(this.state.store).catch(() => this.setState({ sync: 'error' }));
+          this.setState({ sync: 'cloud' });
+        }
+      }, () => this.setState({ sync: 'error' }));
+    } catch (e) { this.setState({ sync: 'error' }); }
+  }
+
+  mutate(fn) {
+    const next = JSON.parse(JSON.stringify(this.state.store));
+    fn(next);
+    this.setState({ store: next });
+    try { localStorage.setItem('plmm-data-v1', JSON.stringify(next)); } catch (e) {}
+    if (this.docRef) this.docRef.set(next).catch(() => this.setState({ sync: 'error' }));
+  }
+
+  ds(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  parse(s) { const p = s.split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); }
+  t12(t) { const p = t.split(':').map(Number); const ap = p[0] >= 12 ? 'PM' : 'AM'; const h = ((p[0] + 11) % 12) + 1; return h + (p[1] ? ':' + String(p[1]).padStart(2, '0') : '') + ' ' + ap; }
+  t12p(t) { const p = t.split(':').map(Number); const ap = p[0] >= 12 ? 'PM' : 'AM'; const h = ((p[0] + 11) % 12) + 1; return String(h).padStart(2, '0') + ':' + String(p[1]).padStart(2, '0') + ' ' + ap; }
+  tShort(t) { const p = t.split(':').map(Number); const ap = p[0] >= 12 ? 'PM' : 'AM'; const h = ((p[0] + 11) % 12) + 1; return h + (p[1] ? ':' + String(p[1]).padStart(2, '0') : '') + ap; }
+  MONTHS() { return ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']; }
+  DOWS() { return ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']; }
+  longDate(s) { const d = this.parse(s); return this.DOWS()[d.getDay()] + ', ' + this.MONTHS()[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear(); }
+
+  attend(ev) {
+    const exp = Math.max(1, Number(ev.expected) || 1);
+    const att = Math.max(0, exp - (ev.absences || []).length);
+    const pct = Math.round(att / exp * 100);
+    return { att, exp, pct };
+  }
+  threshold() { const stg = this.state && this.state.store && this.state.store.settings; const val = stg && stg.cancelThreshold != null ? stg.cancelThreshold : (this.props.cancelThreshold ?? 40); return Number(val) || 40; }
+  defExpected() { const stg = this.state && this.state.store && this.state.store.settings; const val = stg && stg.defaultExpected != null ? stg.defaultExpected : (this.props.defaultExpected ?? 10); return Math.max(1, Number(val) || 10); }
+  bdayMonthMap() {
+    if (this._bmMap) return this._bmMap;
+    const map = {};
+    const locs = ['en-US'];
+    try { if (navigator.language && navigator.language !== 'en-US') locs.push(navigator.language); } catch (e) {}
+    locs.forEach(loc => {
+      for (let i = 0; i < 12; i++) {
+        const d = new Date(2000, i, 1);
+        ['long', 'short'].forEach(w => { try { map[d.toLocaleDateString(loc, { month: w }).toLowerCase().replace(/\./g, '')] = i + 1; } catch (e) {} });
+      }
+    });
+    this._bmMap = map; return map;
+  }
+  parseBday(s) {
+    s = (s || '').trim().toLowerCase().replace(/,/g, '');
+    if (!s) return { m: 0, d: 0 };
+    let mm = 0, dd = 0;
+    const num = s.match(/^(\d{1,2})\s*[\/\-\.]\s*(\d{1,2})$/);
+    if (num) { mm = +num[1]; dd = +num[2]; if (mm > 12 && dd <= 12) { const t = mm; mm = dd; dd = t; } }
+    else {
+      const map = this.bdayMonthMap();
+      let name = null;
+      const m2 = s.match(/^([^\d\s][^\d]*?)\s+(\d{1,2})$/);
+      const m3 = s.match(/^(\d{1,2})\s+([^\d\s][^\d]*)$/);
+      if (m2) { name = m2[1]; dd = +m2[2]; } else if (m3) { name = m3[2]; dd = +m3[1]; }
+      if (name) { name = name.trim().replace(/\./g, ''); mm = map[name] || map[name.slice(0, 3)] || 0; }
+    }
+    const daysIn = mm >= 1 && mm <= 12 ? new Date(2000, mm, 0).getDate() : 0;
+    if (mm >= 1 && mm <= 12 && dd >= 1 && dd <= daysIn) return { m: mm, d: dd };
+    return null;
+  }
+  fmtBday(m, d) { if (!m || !d) return ''; try { return new Date(2000, m - 1, d).toLocaleDateString(undefined, { month: 'long', day: 'numeric' }); } catch (e) { return this.MONTHS()[m - 1] + ' ' + d; } }
+
+  chip(color) { return { display: 'inline-block', background: color, color: '#ffffff', borderRadius: '999px', padding: '2px 10px', fontSize: '11px', fontWeight: 800, letterSpacing: '0.4px', whiteSpace: 'nowrap' }; }
+  pill(active, color) {
+    return active
+      ? { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', borderRadius: '999px', border: '1.5px solid ' + color, background: color, color: '#ffffff', fontSize: '12.5px', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }
+      : { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', borderRadius: '999px', border: '1px solid var(--bstrong)', background: 'var(--card)', color: 'var(--muted)', fontSize: '12.5px', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' };
+  }
+  dot(color, onDark) { return { width: '8px', height: '8px', borderRadius: '50%', background: onDark ? '#ffffff' : color, display: 'inline-block', flex: 'none' }; }
+
+  openModal(modal) { this.setState({ modal, formError: '', confirm: false, bdPick: null, bdErr: false, thDraft: null }); }
+  openEform(ev, date, group) {
+    this.form = ev
+      ? { date: ev.date, time: ev.time, type: ev.type, group: ev.group, venue: ev.venue, occasion: ev.occasion, expected: ev.expected }
+      : { date: date || this.ds(new Date()), time: '07:00', type: 'mass', group: group || '', venue: '', occasion: '', expected: this.defExpected() };
+    this.openModal({ t: 'eform', id: ev ? ev.id : null });
+  }
+  openMform(m) {
+    this.form = m
+      ? { name: m.name, group: m.group, voice: m.voice, role: m.role, bMonth: m.bMonth || '', bDay: m.bDay || '', instrumentalist: !!m.instrumentalist, instrument: m.instrument || '' }
+      : { name: '', group: 'CSA', voice: '', role: 'Member', bMonth: '', bDay: '', instrumentalist: false, instrument: '' };
+    this.openModal({ t: 'mform', id: m ? m.id : null });
+  }
+
+  navStep(dir) {
+    const S = this.state; let view = S.calView || 'month';
+    if (S.isMobile && view === 'week') view = 'month';
+    if (view === 'year') { this.setState({ vy: S.vy + dir, miniVy: S.vy + dir, miniVm: S.vm, selDay: this.ds(new Date(S.vy + dir, S.vm, 1)) }); return; }
+    if (view === 'week') {
+      const sd = this.parse(S.selDay); const nd = new Date(sd.getFullYear(), sd.getMonth(), sd.getDate() + 7 * dir);
+      this.setState({ selDay: this.ds(nd), vm: nd.getMonth(), vy: nd.getFullYear(), miniVm: nd.getMonth(), miniVy: nd.getFullYear() }); return;
+    }
+    const nm0 = S.vm + dir; const ny = nm0 < 0 ? S.vy - 1 : nm0 > 11 ? S.vy + 1 : S.vy; const nm = (nm0 + 12) % 12;
+    this.setState({ vm: nm, vy: ny, miniVm: nm, miniVy: ny, selDay: this.ds(new Date(ny, nm, 1)) });
+  }
+
+  buildEventRow(ev, openFn) {
+    const a = this.attend(ev);
+    const insts = (ev.insts || []).map(id => { const m = (this.state.store.members || []).find(x => x.id === id); return m ? m.name : null; }).filter(Boolean);
+    const cancelled = ev.status === 'cancelled';
+    const low = !cancelled && a.pct < this.threshold();
+    const d = this.parse(ev.date);
+    return {
+      id: ev.id,
+      dow: this.DOWS()[d.getDay()].slice(0, 3).toUpperCase(),
+      dayNum: String(d.getDate()),
+      groupLabel: this.gLabel(ev.group),
+      chipStyle: this.chip(this.gColor(ev.group)),
+      title: (ev.type === 'rehearsal' ? 'Rehearsal' : 'Mass') + (ev.occasion ? ' · ' + ev.occasion : ''),
+      sub: this.t12p(ev.time) + ' · ' + ev.venue,
+      att: cancelled ? 'Cancelled' : a.att + '/' + a.exp,
+      attSub: cancelled ? '' : a.pct + '% attending',
+      pct: a.pct,
+      attStyle: { fontWeight: 800, fontSize: '15px', color: cancelled ? 'var(--muted2)' : (low ? 'var(--redink)' : 'var(--text)'), whiteSpace: 'nowrap' },
+      hasInst: insts.length > 0,
+      instLine: '♪ ' + insts.join(', '),
+      open: openFn || (() => this.openModal({ t: 'event', id: ev.id }))
+    };
+  }
+
+  renderVals() {
+    const S = this.state, store = S.store || { members: [], events: [], settings: { pin: '1234' } };
+    const requirePin = this.props.requirePin ?? true;
+    const locked = !!requirePin && !S.unlocked;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const todayStr = this.ds(today);
+    const TH = this.threshold();
+    
+
+    const v = {
+      locked, appVisible: !locked, notShot: !S.shot, shot: S.shot, threshold: TH,
+      isDash: S.page === 'dash', isCal: S.page === 'cal', isMembers: S.page === 'mem',
+      goDash: () => this.setState({ page: 'dash' }),
+      goCal: () => this.setState({ page: 'cal' }),
+      goMem: () => this.setState({ page: 'mem' }),
+      stopProp: e => e.stopPropagation(),
+      closeModal: () => this.setState({ modal: null, formError: '', confirm: false, bdPick: null, bdErr: false, thDraft: null }),
+      pinError: S.pinError,
+      pinIsDefault: (store.settings.pin || '1234') === '1234',
+      pinRef: el => { this._pin = el; },
+      pinKey: e => { if (e.key === 'Enter') v.tryUnlock(); },
+      tryUnlock: () => {
+        const val = this._pin ? this._pin.value.trim() : '';
+        if (val === (store.settings.pin || '1234')) {
+          try { sessionStorage.setItem('plmm-unlocked', '1'); } catch (e) {}
+          this.setState({ unlocked: true, pinError: false });
+        } else this.setState({ pinError: true });
+      },
+      openPin: () => this.openModal({ t: 'pin' }),
+      openSettings: () => this.openModal({ t: 'settings' }),
+      todayLong: this.longDate(todayStr),
+      onF: e => { const t = e.target; this.form = this.form || {}; this.form[t.name] = t.type === 'checkbox' ? t.checked : t.value; },
+      formError: !!S.formError, formErrorMsg: S.formError
+    };
+
+    // tabs
+    const tab = act => ({ flex: '1', maxWidth: '170px', padding: '9px 0', borderRadius: '999px', border: '1.5px solid ' + (act ? '#bc0700' : 'var(--line)'), background: act ? '#bc0700' : 'var(--card)', color: act ? '#ffffff' : 'var(--muted)', fontSize: '13.5px', fontWeight: 800, cursor: 'pointer', letterSpacing: '0.3px' });
+    v.tabDash = tab(v.isDash); v.tabCal = tab(v.isCal); v.tabMem = tab(v.isMembers);
+    v.themeLabel = S.theme === 'dark' ? 'Light mode' : 'Dark mode';
+    v.toggleTheme = () => {
+      const t2 = S.theme === 'dark' ? 'light' : 'dark';
+      try { localStorage.setItem('plmm-theme', t2); } catch (e) {}
+      try { document.body.classList.toggle('dark', t2 === 'dark'); } catch (e) {}
+      this.setState({ theme: t2 });
+    };
+    v.deskNav = !S.isMobile;
+    v.mobNav = S.isMobile;
+    v.menuOpen = !!S.menuOpen;
+    v.toggleMenu = () => this.setState({ menuOpen: !S.menuOpen });
+    const bl = { width: '22px', height: '2.5px', borderRadius: '2px', background: 'var(--text)', display: 'block', flex: 'none' };
+    v.burger1 = bl; v.burger2 = bl;
+    const dItem = act => ({ display: 'block', width: '100%', textAlign: 'left', padding: '11px 13px', borderRadius: '10px', border: 'none', background: act ? '#bc0700' : 'transparent', color: act ? '#ffffff' : 'var(--text)', fontSize: '15px', fontWeight: 800, cursor: 'pointer' });
+    v.drawerDash = dItem(v.isDash); v.drawerCal = dItem(v.isCal); v.drawerMem = dItem(v.isMembers);
+    v.drawerBtn = { display: 'block', width: '100%', textAlign: 'left', padding: '11px 13px', borderRadius: '10px', border: '1px solid var(--line)', background: 'var(--card)', color: 'var(--muted)', fontSize: '14px', fontWeight: 800, cursor: 'pointer' };
+    v.menuDash = () => this.setState({ page: 'dash', menuOpen: false });
+    v.menuCal = () => this.setState({ page: 'cal', menuOpen: false });
+    v.menuMem = () => this.setState({ page: 'mem', menuOpen: false });
+    v.menuPin = () => { this.setState({ menuOpen: false }); this.openModal({ t: 'pin' }); };
+    v.menuSettings = () => { this.setState({ menuOpen: false }); this.openModal({ t: 'settings' }); };
+
+    // sync badge
+    const syncMap = { local: ['#b3a396', 'This device only', 'Data is saved in this browser only. See the Setup Guide to enable cloud sync.'], cloud: ['#2e9e44', 'Cloud synced', 'Changes sync live to every admin device.'], error: ['#bc0700', 'Sync error', 'Could not reach the cloud database. Changes are saved on this device.'] };
+    const sm = syncMap[S.sync];
+    v.syncDotStyle = { width: '8px', height: '8px', borderRadius: '50%', background: sm[0], display: 'inline-block' };
+    v.syncLabel = sm[1]; v.syncTitle = sm[2];
+
+    // ---- Dashboard ----
+    const events = store.events || [];
+    v.statMembers = String(store.members.length);
+    v.statMonth = String(events.filter(e => { const d = this.parse(e.date); return d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear(); }).length);
+    const week = events.filter(e => { const diff = (this.parse(e.date) - today) / 86400000; return diff >= 0 && diff < 7; }).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+    v.upcoming = week.map(ev => this.buildEventRow(ev));
+    v.upcomingEmpty = week.length === 0;
+    const alerts = events.filter(e => { const diff = (this.parse(e.date) - today) / 86400000; return diff >= 0 && e.status !== 'cancelled' && this.attend(e).pct < TH; }).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+    v.statAlerts = String(alerts.length);
+    v.statAlertStyle = { fontWeight: 800, fontSize: '26px', lineHeight: 1.1, color: alerts.length ? 'var(--redink)' : 'var(--text)' };
+    v.hasAlerts = alerts.length > 0;
+    v.alerts = alerts.map(ev => {
+      const row = this.buildEventRow(ev);
+      row.sub = this.longDate(ev.date) + ' · ' + this.t12p(ev.time) + ' · ' + ev.venue;
+      row.cancel = e => { e.stopPropagation(); this.mutate(st => { const x = st.events.find(y => y.id === ev.id); if (x) x.status = 'cancelled'; }); };
+      return row;
+    });
+
+    // birthdays next 7 days
+    const bdays = [];
+    store.members.forEach(m => {
+      if (!m.bMonth || !m.bDay) return;
+      let cand = new Date(today.getFullYear(), m.bMonth - 1, m.bDay);
+      if (cand < today) cand = new Date(today.getFullYear() + 1, m.bMonth - 1, m.bDay);
+      const diff = (cand - today) / 86400000;
+      if (diff >= 0 && diff < 7) bdays.push({ m, cand, diff });
+    });
+    bdays.sort((a, b) => a.diff - b.diff);
+    v.bdays = bdays.map(b => ({
+      name: b.m.name,
+      mon: this.MONTHS()[b.cand.getMonth()].slice(0, 3).toUpperCase(),
+      day: String(b.cand.getDate()),
+      sub: this.gName(b.m.group) + (b.diff === 0 ? ' · Today!' : b.diff === 1 ? ' · Tomorrow' : ' · in ' + Math.round(b.diff) + ' days')
+    }));
+    v.bdaysEmpty = bdays.length === 0;
+
+    // ---- Calendar ----
+    let view = S.calView || 'month';
+    if (S.isMobile && view === 'week') view = 'month';
+    const WS = Number(S.weekStartDow) || 0;
+    const CK = S.checks || { CSA: true, SAC: true, SMC: true, HSR: true, SCC: true, GC: true };
+    const selD0 = this.parse(S.selDay || todayStr);
+    const weekStart = new Date(selD0.getFullYear(), selD0.getMonth(), selD0.getDate() - ((selD0.getDay() - WS + 7) % 7));
+    const mobileCal = S.isMobile && !S.shot && (view === 'month' || view === 'week');
+    v.calSidebar = !S.isMobile && !S.shot;
+    v.mobCalControls = S.isMobile && !S.shot;
+    v.calGrid = view === 'month' && !mobileCal;
+    v.calWeek = view === 'week' && !mobileCal;
+    v.calYear = view === 'year';
+    v.calAgenda = mobileCal;
+    v.prevM = () => this.navStep(-1);
+    v.nextM = () => this.navStep(1);
+    v.todayM = () => this.setState({ vm: today.getMonth(), vy: today.getFullYear(), selDay: todayStr, miniVm: today.getMonth(), miniVy: today.getFullYear(), pickerOpen: false });
+    v.toggleShot = () => this.setState({ shot: !S.shot });
+    v.addEvent = () => this.openEform(null, (S.vm === today.getMonth() && S.vy === today.getFullYear()) ? todayStr : this.ds(new Date(S.vy, S.vm, 1)));
+    v.vyStr = String(S.vy);
+    v.monthName = this.MONTHS()[S.vm];
+    v.pickerOpen = !!S.pickerOpen;
+    v.togglePicker = () => this.setState({ pickerOpen: !S.pickerOpen });
+    v.closePicker = () => this.setState({ pickerOpen: false });
+    v.pkYearDown = () => this.setState({ vy: S.vy - 1, miniVy: S.vy - 1, miniVm: S.vm, selDay: this.ds(new Date(S.vy - 1, S.vm, 1)) });
+    v.pkYearUp = () => this.setState({ vy: S.vy + 1, miniVy: S.vy + 1, miniVm: S.vm, selDay: this.ds(new Date(S.vy + 1, S.vm, 1)) });
+    v.pkMonths = this.MONTHS().map((nm, i) => ({
+      label: nm.slice(0, 3),
+      style: i === S.vm
+        ? { padding: '8px 0', borderRadius: '9px', border: 'none', background: '#bc0700', color: '#ffffff', fontSize: '12.5px', fontWeight: 800, cursor: 'pointer' }
+        : { padding: '8px 0', borderRadius: '9px', border: 'none', background: 'var(--soft)', color: 'var(--text)', fontSize: '12.5px', fontWeight: 700, cursor: 'pointer' },
+      click: () => this.setState({ vm: i, miniVm: i, miniVy: S.vy, selDay: this.ds(new Date(S.vy, i, 1)), pickerOpen: false })
+    }));
+    v.showWeekSeg = !S.isMobile;
+    v.deskToolbar = !S.isMobile;
+    const wsSeg = act => act
+      ? { padding: '4px 10px', borderRadius: '999px', border: 'none', background: '#bc0700', color: '#ffffff', fontSize: '11.5px', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }
+      : { padding: '4px 10px', borderRadius: '999px', border: 'none', background: 'transparent', color: 'var(--muted)', fontSize: '11.5px', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' };
+    v.wsBtns = [{ n: 0, l: 'Sun' }, { n: 1, l: 'Mon' }, { n: 6, l: 'Sat' }].map(o => ({
+      label: o.l, style: wsSeg(WS === o.n),
+      click: () => { try { localStorage.setItem('plmm-weekstart', String(o.n)); } catch (e) {} this.setState({ weekStartDow: o.n }); }
+    }));
+    v.dowHead = [0, 1, 2, 3, 4, 5, 6].map(i => { const dow = (WS + i) % 7; return { label: this.DOWS()[dow].slice(0, 3).toUpperCase(), style: { padding: '8px 4px', textAlign: 'center', fontSize: '10.5px', fontWeight: 800, letterSpacing: '1px', color: dow === 0 ? 'var(--redink)' : 'var(--muted2)' } }; });
+    const mVm = S.miniVm == null ? S.vm : S.miniVm, mVy = S.miniVy == null ? S.vy : S.miniVy;
+    v.miniLabel = this.MONTHS()[mVm].slice(0, 3) + ' ' + mVy;
+    v.miniPrev = () => this.setState(mVm === 0 ? { miniVm: 11, miniVy: mVy - 1 } : { miniVm: mVm - 1, miniVy: mVy });
+    v.miniNext = () => this.setState(mVm === 11 ? { miniVm: 0, miniVy: mVy + 1 } : { miniVm: mVm + 1, miniVy: mVy });
+    v.sideDows = [0, 1, 2, 3, 4, 5, 6].map(i => { const dow = (WS + i) % 7; return { label: 'SMTWTFS'[dow], style: { textAlign: 'center', fontSize: '9.5px', fontWeight: 800, color: dow === 0 ? 'var(--redink)' : 'var(--muted2)', padding: '3px 0' } }; });
+    v.sideCells = [];
+    {
+      const lead2 = (new Date(mVy, mVm, 1).getDay() - WS + 7) % 7;
+      const dIn2 = new Date(mVy, mVm + 1, 0).getDate();
+      const weeks2 = Math.ceil((lead2 + dIn2) / 7);
+      for (let i = 0; i < weeks2 * 7; i++) {
+        const d = new Date(mVy, mVm, 1 - lead2 + i);
+        const dstr = this.ds(d);
+        const isCur = d.getMonth() === mVm;
+        const isToday = dstr === todayStr;
+        const isSel = dstr === S.selDay;
+        v.sideCells.push({
+          num: String(d.getDate()),
+          style: { textAlign: 'center', fontSize: '11px', padding: '4px 0', borderRadius: '7px', cursor: 'pointer', fontWeight: 700, color: isSel ? '#ffffff' : isCur ? 'var(--text)' : 'var(--faint)', background: isSel ? '#bc0700' : 'transparent', boxShadow: isToday && !isSel ? '0 0 0 1.5px var(--redink) inset' : 'none' },
+          click: () => this.setState({ selDay: dstr, vm: d.getMonth(), vy: d.getFullYear(), miniVm: d.getMonth(), miniVy: d.getFullYear() })
+        });
+      }
+    }
+    const seg = act => act
+      ? { padding: '7px 15px', borderRadius: '999px', border: 'none', background: '#bc0700', color: '#ffffff', fontSize: '12.5px', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }
+      : { padding: '7px 15px', borderRadius: '999px', border: 'none', background: 'transparent', color: 'var(--muted)', fontSize: '12.5px', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' };
+    v.segWeek = seg(view === 'week'); v.segMonth = seg(view === 'month'); v.segYear = seg(view === 'year');
+    v.setWeek = () => this.setState({ calView: 'week' });
+    v.setMonth = () => this.setState({ calView: 'month' });
+    v.setYear = () => this.setState({ calView: 'year' });
+    const codesAll = ['CSA', 'SAC', 'SMC', 'HSR', 'SCC', 'GC'];
+    const onCodes = codesAll.filter(c => CK[c]);
+    const who = (onCodes.length === codesAll.length || onCodes.length === 0) ? 'All Groups' : onCodes.length === 1 ? this.gName(onCodes[0] === 'GC' ? '' : onCodes[0]) : onCodes.join(' + ');
+    let when = this.MONTHS()[S.vm] + ' ' + S.vy;
+    if (view === 'week') { const we = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 6); when = 'Week of ' + this.MONTHS()[weekStart.getMonth()] + ' ' + weekStart.getDate() + ' – ' + (we.getMonth() === weekStart.getMonth() ? '' : this.MONTHS()[we.getMonth()] + ' ') + we.getDate() + ', ' + we.getFullYear(); }
+    if (view === 'year') when = String(S.vy);
+    v.shotTitle = when + ' — ' + who + ' Schedule';
+
+    const allDefs = this.GROUPS().concat([{ code: 'GC', name: 'Grand Choir', color: '#6d3fae' }]);
+    v.groupChecks = allDefs.map(g => {
+      const on = !!CK[g.code];
+      return {
+        code: g.code, name: g.name,
+        mark: on ? '✓' : '',
+        boxStyle: { width: '17px', height: '17px', borderRadius: '5px', border: '2px solid ' + (on ? g.color : 'var(--bstrong)'), background: on ? g.color : 'var(--card)', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 800, flex: 'none', boxSizing: 'border-box' },
+        dotStyle: this.dot(g.color, false),
+        rowStyle: { display: 'flex', alignItems: 'center', gap: '9px', padding: '6px 7px', borderRadius: '9px', cursor: 'pointer', opacity: on ? 1 : 0.55 },
+        pillLabel: (on ? '✓ ' : '') + g.code,
+        pillStyle: on
+          ? { display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '6px 12px', borderRadius: '999px', border: '1.5px solid ' + g.color, background: g.color, color: '#ffffff', fontSize: '12px', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }
+          : { display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '6px 12px', borderRadius: '999px', border: '1px solid var(--bstrong)', background: 'var(--card)', color: 'var(--muted)', fontSize: '12px', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' },
+        toggle: () => { const nc = Object.assign({}, CK); nc[g.code] = !on; this.setState({ checks: nc }); },
+        drag: e => { this._dragGroup = g.code; try { e.dataTransfer.setData('text/plain', g.code); e.dataTransfer.effectAllowed = 'copy'; } catch (err) {} }
+      };
+    });
+    v.checkAll = () => this.setState({ checks: { CSA: true, SAC: true, SMC: true, HSR: true, SCC: true, GC: true } });
+    v.checkNone = () => this.setState({ checks: {} });
+    v.legend = this.GROUPS().map(g => ({ label: g.code + ' · ' + g.name, dotStyle: this.dot(g.color, false) }));
+    v.legend.push({ label: 'GC · Grand Choir', dotStyle: this.dot('#6d3fae', false) });
+    v.legendOn = S.isMobile && S.showLegend !== false;
+    v.deskHint = !S.isMobile;
+    v.toggleLegend = () => this.setState({ showLegend: !(S.showLegend !== false) });
+
+    const matchG = e => !!CK[e.group || 'GC'];
+    const first = new Date(S.vy, S.vm, 1);
+    const lead0 = (first.getDay() - WS + 7) % 7;
+    const start = new Date(S.vy, S.vm, 1 - lead0);
+    const daysIn = new Date(S.vy, S.vm + 1, 0).getDate();
+    const weeks = Math.ceil((lead0 + daysIn) / 7);
+    v.cells = [];
+    for (let i = 0; i < weeks * 7; i++) {
+      const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+      const dstr = this.ds(d);
+      const isCur = d.getMonth() === S.vm;
+      const isToday = dstr === todayStr;
+      const cellEvents = events.filter(e => e.date === dstr && matchG(e)).sort((a, b) => a.time.localeCompare(b.time));
+      const cellBdays = store.members.filter(m => m.bMonth === d.getMonth() + 1 && m.bDay === d.getDate());
+      v.cells.push({
+        num: String(d.getDate()),
+        style: { minHeight: 'clamp(74px,12vw,116px)', padding: '5px', borderRight: '1px solid var(--line2)', borderBottom: '1px solid var(--line2)', display: 'flex', flexDirection: 'column', gap: '3px', cursor: 'pointer', background: isToday ? 'var(--todaybg)' : isCur ? 'var(--card)' : 'var(--dim)', boxSizing: 'border-box', minWidth: 0 },
+        numStyle: isToday
+          ? { display: 'inline-flex', width: '22px', height: '22px', borderRadius: '50%', background: '#bc0700', color: '#ffffff', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 800, flex: 'none' }
+          : { fontSize: '12px', fontWeight: 700, color: isCur ? 'var(--text)' : 'var(--faint)', padding: '2px' },
+        click: () => this.openModal({ t: 'day', date: dstr }),
+        dragOver: e => e.preventDefault(),
+        drop: e => { e.preventDefault(); const g0 = this._dragGroup || ''; this.openEform(null, dstr, g0 === 'GC' ? '' : g0); this._dragGroup = null; },
+        bdays: cellBdays.map(m => ({ label: '♪ ' + m.name, title: m.name + "'s birthday" })),
+        events: cellEvents.map(ev => {
+          const cancelled = ev.status === 'cancelled';
+          const col = this.gColor(ev.group);
+          const reh = ev.type === 'rehearsal';
+          const aa = this.attend(ev);
+          const lw = !cancelled && aa.pct < TH;
+          const base = { borderRadius: '6px', padding: '2px 5px', fontSize: '10.5px', fontWeight: 800, whiteSpace: 'nowrap', cursor: 'pointer', boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'space-between' };
+          const style = cancelled
+            ? Object.assign(base, { background: 'var(--line2)', color: 'var(--muted2)', textDecoration: 'line-through' })
+            : reh
+              ? Object.assign(base, { background: 'var(--card)', border: '1.5px solid ' + col, color: col })
+              : Object.assign(base, { background: col, color: '#ffffff' });
+          return {
+            left: this.t12p(ev.time) + ' | ' + this.gLabel(ev.group),
+            right: (lw ? '\u26A0 ' : '') + aa.att + '/' + aa.exp,
+            title: (reh ? 'Rehearsal' : 'Mass') + ' · ' + this.t12(ev.time) + ' · ' + ev.venue + ' · ' + aa.att + '/' + aa.exp + ' attending' + (lw ? ' (LOW ATTENDANCE)' : '') + (cancelled ? ' (CANCELLED)' : ''),
+            style,
+            click: e => { e.stopPropagation(); this.openModal({ t: 'event', id: ev.id }); }
+          };
+        })
+      });
+    }
+
+    // ---- Week view ----
+    if (v.calWeek) {
+      v.weekHead = []; v.weekCells = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + i);
+        const dstr = this.ds(d);
+        const isToday = dstr === todayStr;
+        v.weekHead.push({ label: this.DOWS()[d.getDay()].slice(0, 3).toUpperCase() + ' ' + d.getDate(), style: { padding: '9px 4px', textAlign: 'center', fontSize: '11px', fontWeight: 800, letterSpacing: '0.8px', color: isToday ? 'var(--redink)' : 'var(--muted2)' } });
+        const evs = events.filter(e => e.date === dstr && matchG(e)).sort((a, b) => a.time.localeCompare(b.time));
+        const bds = store.members.filter(m => m.bMonth === d.getMonth() + 1 && m.bDay === d.getDate());
+        v.weekCells.push({
+          click: () => this.openModal({ t: 'day', date: dstr }),
+          dragOver: e => e.preventDefault(),
+          drop: e => { e.preventDefault(); const g0 = this._dragGroup || ''; this.openEform(null, dstr, g0 === 'GC' ? '' : g0); this._dragGroup = null; },
+          style: { minHeight: '260px', padding: '6px', borderRight: '1px solid var(--line2)', display: 'flex', flexDirection: 'column', gap: '5px', cursor: 'pointer', background: isToday ? 'var(--todaybg)' : 'var(--card)', boxSizing: 'border-box', minWidth: 0 },
+          bdays: bds.map(m => ({ label: '♪ ' + m.name })),
+          events: evs.map(ev => {
+            const a = this.attend(ev);
+            const cancelled = ev.status === 'cancelled';
+            const low = !cancelled && a.pct < TH;
+            const reh = ev.type === 'rehearsal';
+            const col = this.gColor(ev.group);
+            const base = { borderRadius: '8px', padding: '5px 7px', cursor: 'pointer', overflow: 'hidden' };
+            return {
+              l1: this.t12p(ev.time) + ' | ' + this.gLabel(ev.group),
+              l2: cancelled ? 'Cancelled' : a.att + '/' + a.exp + (low ? ' · \u26A0 LOW' : ''),
+              title: (reh ? 'Rehearsal' : 'Mass') + ' · ' + this.t12(ev.time) + ' · ' + ev.venue,
+              style: cancelled ? Object.assign(base, { background: 'var(--line2)', color: 'var(--muted2)', textDecoration: 'line-through' }) : reh ? Object.assign(base, { background: 'var(--card)', border: '1.5px solid ' + col, color: col }) : Object.assign(base, { background: col, color: '#ffffff' }),
+              click: e => { e.stopPropagation(); this.openModal({ t: 'event', id: ev.id }); }
+            };
+          })
+        });
+      }
+    }
+
+    // ---- Year view ----
+    if (v.calYear) {
+      v.yearMonths = [];
+      for (let m = 0; m < 12; m++) {
+        const dIn = new Date(S.vy, m + 1, 0).getDate();
+        const lead = (new Date(S.vy, m, 1).getDay() - WS + 7) % 7;
+        const days = [];
+        for (let i = 0; i < lead; i++) days.push({ num: '', style: {}, title: '' });
+        for (let day = 1; day <= dIn; day++) {
+          const dstr = this.ds(new Date(S.vy, m, day));
+          const evs = events.filter(e => e.date === dstr && matchG(e));
+          const hasB = store.members.some(mm => mm.bMonth === m + 1 && mm.bDay === day);
+          const isToday = dstr === todayStr;
+          let st = { fontSize: '10.5px', textAlign: 'center', padding: '3px 0', borderRadius: '5px', cursor: 'pointer', color: 'var(--muted)', fontWeight: 600 };
+          if (evs.length) { const cols = evs.map(e => this.gColor(e.group)).filter((c, i, arr) => arr.indexOf(c) === i); st = Object.assign(st, { background: cols.length === 1 ? cols[0] : '#bc0700', color: '#ffffff', fontWeight: 800 }); }
+          else if (hasB) st = Object.assign(st, { background: '#fdb20b', color: '#111111', fontWeight: 800 });
+          if (isToday) st.boxShadow = '0 0 0 2px var(--redink) inset';
+          days.push({
+            num: String(day),
+            style: st,
+            title: evs.length ? evs.length + ' schedule(s) — click to open' : hasB ? 'Birthday' : '',
+            click: () => { this.setState({ calView: 'month', vm: m, selDay: dstr }); if (evs.length || hasB) this.openModal({ t: 'day', date: dstr }); }
+          });
+        }
+        const m0 = m;
+        v.yearMonths.push({ label: this.MONTHS()[m0], open: () => this.setState({ calView: 'month', vm: m0, selDay: this.ds(new Date(S.vy, m0, 1)) }), days });
+      }
+    }
+
+    // ---- Mobile calendar (compact grid + agenda) ----
+    if (mobileCal) {
+      const sd0 = this.parse(S.selDay || todayStr);
+      const selInMonth = sd0.getMonth() === S.vm && sd0.getFullYear() === S.vy;
+      const selDay = selInMonth ? (S.selDay || todayStr) : this.ds(new Date(S.vy, S.vm, 1));
+      v.miniDows = [0, 1, 2, 3, 4, 5, 6].map(i => { const dow = (WS + i) % 7; return { label: 'SMTWTFS'[dow], style: { textAlign: 'center', fontSize: '11px', fontWeight: 800, color: dow === 0 ? 'var(--redink)' : 'var(--muted2)', padding: '4px 0' } }; });
+      v.miniCells = [];
+      for (let i = 0; i < weeks * 7; i++) {
+        const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+        const dstr = this.ds(d);
+        const isCur = d.getMonth() === S.vm;
+        const isToday = dstr === todayStr;
+        const sel = dstr === selDay;
+        const evs = events.filter(e => e.date === dstr && matchG(e));
+        const dots = evs.slice(0, 4).map(e => ({ style: { width: '5px', height: '5px', borderRadius: '50%', background: e.status === 'cancelled' ? 'var(--faint)' : this.gColor(e.group), flex: 'none' } }));
+        if (store.members.some(m => m.bMonth === d.getMonth() + 1 && m.bDay === d.getDate())) dots.unshift({ style: { width: '5px', height: '5px', borderRadius: '50%', background: '#fdb20b', flex: 'none' } });
+        v.miniCells.push({
+          num: String(d.getDate()),
+          click: () => this.setState({ selDay: dstr, vm: d.getMonth(), vy: d.getFullYear() }),
+          style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', padding: '5px 0 4px', cursor: 'pointer', borderRadius: '10px', background: sel ? 'var(--redsoft)' : 'transparent' },
+          numStyle: sel
+            ? { width: '30px', height: '30px', borderRadius: '50%', background: '#bc0700', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 800, boxSizing: 'border-box' }
+            : { width: '30px', height: '30px', borderRadius: '50%', border: isToday ? '2px solid #bc0700' : '2px solid transparent', color: isCur ? 'var(--text)' : 'var(--faint)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: isToday ? 800 : 600, boxSizing: 'border-box' },
+          dots
+        });
+      }
+      const ags = [];
+      const dayList = [];
+      if (view === 'week') {
+        for (let k = 0; k < 7; k++) dayList.push(new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + k));
+      } else {
+        const startDay = selInMonth ? this.parse(selDay).getDate() : 1;
+        for (let day = startDay; day <= daysIn; day++) dayList.push(new Date(S.vy, S.vm, day));
+      }
+      for (const d of dayList) {
+        const dstr = this.ds(d);
+        const evs = events.filter(e => e.date === dstr && matchG(e)).sort((a, b) => a.time.localeCompare(b.time));
+        const bd = store.members.filter(m => m.bMonth === d.getMonth() + 1 && m.bDay === d.getDate());
+        if (!evs.length && !bd.length) continue;
+        const items = bd.map(m => ({ isB: true, isEv: false, label: 'Birthday — ' + m.name + ' (' + m.group + ')' })).concat(evs.map(ev => {
+          const a = this.attend(ev);
+          const cancelled = ev.status === 'cancelled';
+          const low = !cancelled && a.pct < TH;
+          const reh = ev.type === 'rehearsal';
+          const instNames = (ev.insts || []).map(id => { const mm = store.members.find(x => x.id === id); return mm ? mm.name : null; }).filter(Boolean);
+          return {
+            isB: false, isEv: true,
+            hasInst: instNames.length > 0,
+            instLine: '♪ ' + instNames.join(', '),
+            time: this.t12p(ev.time),
+            accent: { width: '4px', alignSelf: 'stretch', borderRadius: '99px', background: cancelled ? 'var(--faint)' : this.gColor(ev.group), flex: 'none', minHeight: '34px' },
+            title: this.gLabel(ev.group) + ' · ' + (reh ? 'Rehearsal' : 'Mass') + (ev.occasion ? ' · ' + ev.occasion : ''),
+            titleStyle: { fontWeight: 800, fontSize: '15px', textDecoration: cancelled ? 'line-through' : 'none', color: cancelled ? 'var(--muted2)' : 'var(--text)' },
+            sub: ev.venue,
+            att: cancelled ? 'Cancelled' : a.att + '/' + a.exp,
+            attStyle: { fontWeight: 800, fontSize: '15px', color: cancelled ? 'var(--muted2)' : low ? 'var(--redink)' : 'var(--text)', whiteSpace: 'nowrap', flex: 'none' },
+            showLow: low,
+            click: () => this.openModal({ t: 'event', id: ev.id })
+          };
+        }));
+        ags.push({
+          label: this.DOWS()[d.getDay()].toUpperCase() + ' ' + d.getDate() + (d.getMonth() === S.vm ? '' : ' ' + this.MONTHS()[d.getMonth()].slice(0, 3).toUpperCase()),
+          labelStyle: { fontSize: '12px', fontWeight: 800, letterSpacing: '1.2px', color: dstr === todayStr ? 'var(--redink)' : 'var(--muted2)', flex: 'none' },
+          add: () => this.openEform(null, dstr),
+          items
+        });
+      }
+      v.agendaDays = ags;
+      v.agendaEmpty = ags.length === 0;
+    }
+
+    // ---- Members ----
+    v.addMember = () => this.openMform(null);
+    v.onSearch = e => this.setState({ q: e.target.value });
+    const counts = {}; store.members.forEach(m => { counts[m.group] = (counts[m.group] || 0) + 1; });
+    v.memberChips = [{ label: 'All', code: 'ALL', color: '#111111' }].concat(this.GROUPS().map(g => ({ label: g.code, code: g.code, color: g.color })))
+      .map(c => ({ label: c.label, style: this.pill(S.mfilter === c.code, c.color), dotStyle: this.dot(c.color, S.mfilter === c.code), click: () => this.setState({ mfilter: c.code }) }));
+    const MV = S.mvoice || 'ALL';
+    v.voiceChips = ['ALL', 'Soprano', 'Alto', 'Tenor', 'Bass'].map(vp => ({
+      label: vp === 'ALL' ? 'All voices' : vp,
+      style: this.pill(MV === vp, '#bc0700'),
+      click: () => this.setState({ mvoice: vp })
+    }));
+    const MI = !!S.minst;
+    v.instChip = { label: MI ? '✓ Instrumentalist' : 'Instrumentalist', style: this.pill(MI, '#fc4c0e'), click: () => this.setState({ minst: !MI }) };
+    const MF = S.mfShow !== false;
+    v.mfShow = MF;
+    v.mfLabel = MF ? 'Hide filters' : 'Show filters';
+    v.toggleMf = () => this.setState({ mfShow: !MF });
+    const dirZ = S.msort === 'za';
+    v.sortLabel = dirZ ? 'Z–A' : 'A–Z';
+    v.toggleSort = () => this.setState({ msort: dirZ ? 'az' : 'za' });
+    const q = (S.q || '').toLowerCase();
+    const filtered = store.members
+      .filter(m => (S.mfilter === 'ALL' || m.group === S.mfilter) && (MV === 'ALL' || m.voice === MV) && (!MI || m.instrumentalist) && (!q || m.name.toLowerCase().includes(q) || (m.role || '').toLowerCase().includes(q)))
+      .sort((a, b) => dirZ ? b.name.localeCompare(a.name) : a.name.localeCompare(b.name));
+    v.mrows = filtered.map(m => {
+      const meta = [];
+      if (m.role) meta.push(m.role);
+      if (m.voice) meta.push(m.voice);
+      if (m.bMonth && m.bDay) meta.push('Birthday ' + this.MONTHS()[m.bMonth - 1].slice(0, 3) + ' ' + m.bDay);
+      if (m.instrumentalist) meta.push('Instrumentalist' + (m.instrument ? ' (' + m.instrument + ')' : ''));
+      return { name: m.name, meta: meta.join(' · ') || '—', group: m.group, chipStyle: this.chip(this.gColor(m.group)), edit: () => this.openMform(m) };
+    });
+    v.mrowsEmpty = filtered.length === 0;
+    v.mcountLine = S.mfilter === 'ALL' ? filtered.length + ' Members' : this.gName(S.mfilter) + ' — ' + filtered.length + ' Member' + (filtered.length === 1 ? '' : 's');
+
+    // ---- Modals ----
+    const M = S.modal;
+    v.mDay = !!M && M.t === 'day';
+    v.mEvent = !!M && M.t === 'event';
+    v.mEform = !!M && M.t === 'eform';
+    v.mMform = !!M && M.t === 'mform';
+    v.mPin = !!M && M.t === 'pin';
+    v.mSettings = !!M && M.t === 'settings';
+
+    if (v.mDay) {
+      v.dayTitle = this.longDate(M.date);
+      const list = events.filter(e => e.date === M.date).sort((a, b) => a.time.localeCompare(b.time));
+      v.dayEvents = list.map(ev => this.buildEventRow(ev));
+      v.dayEmpty = list.length === 0;
+      const d = this.parse(M.date);
+      v.dayBdays = store.members.filter(m => m.bMonth === d.getMonth() + 1 && m.bDay === d.getDate()).map(m => ({ label: m.name + ' (' + this.gName(m.group) + ')' }));
+      v.dayAdd = () => this.openEform(null, M.date);
+    }
+
+    if (v.mEvent) {
+      const ev = events.find(e => e.id === M.id);
+      if (!ev) { v.mEvent = false; } else {
+        const a = this.attend(ev);
+        const cancelled = ev.status === 'cancelled';
+        const low = !cancelled && a.pct < TH;
+        v.evChipStyle = this.chip(this.gColor(ev.group));
+        v.evGroupLabel = ev.group ? ev.group + ' — ' + this.gName(ev.group) : 'GC — Grand Choir';
+        v.evTitle = ev.type === 'rehearsal' ? 'Rehearsal' : 'Mass';
+        v.evWhen = this.longDate(ev.date) + ' · ' + this.t12p(ev.time) + ' · ' + ev.venue;
+        v.evHasOccasion = !!ev.occasion; v.evOccasion = ev.occasion;
+        v.evCancelled = cancelled;
+        v.evAtt = a.att + ' / ' + a.exp; v.evPct = a.pct; v.evExpected = a.exp;
+        v.evAttStyle = { fontWeight: 800, fontSize: '19px', fontWeight: 800, color: cancelled ? 'var(--muted2)' : low ? 'var(--redink)' : 'var(--text)' };
+        v.evBarStyle = { height: '100%', width: a.pct + '%', background: cancelled ? 'var(--faint)' : low ? '#bc0700' : '#fdb20b', borderRadius: '999px', transition: 'width .25s' };
+        v.evLow = low;
+        v.evCancel = () => this.mutate(st => { const x = st.events.find(y => y.id === ev.id); if (x) x.status = 'cancelled'; });
+        v.evRestore = () => this.mutate(st => { const x = st.events.find(y => y.id === ev.id); if (x) x.status = 'active'; });
+        v.evAbsCount = (ev.absences || []).length;
+        v.evAbs = (ev.absences || []).map((ab, i) => ({
+          label: ab.name + (ab.reason ? ' — ' + ab.reason : ''),
+          remove: () => this.mutate(st => { const x = st.events.find(y => y.id === ev.id); if (x) x.absences.splice(i, 1); })
+        }));
+        const absNames = (ev.absences || []).map(ab => ab.name);
+        const pool = ev.group ? store.members.filter(m => m.group === ev.group) : store.members;
+        v.evAbsOptions = pool.filter(m => !absNames.includes(m.name)).map(m => ({ name: m.name, label: m.name + ' (' + m.group + ')' }));
+        v.absSelRef = el => { this._absSel = el; };
+        v.absNameRef = el => { this._absName = el; };
+        v.absReasonRef = el => { this._absReason = el; };
+        v.addAbsence = () => {
+          const name = (this._absName && this._absName.value.trim()) || (this._absSel && this._absSel.value) || '';
+          if (!name) return;
+          const reason = this._absReason ? this._absReason.value.trim() : '';
+          this.mutate(st => { const x = st.events.find(y => y.id === ev.id); if (x && !x.absences.some(ab => ab.name === name)) x.absences.push({ name, reason }); });
+          if (this._absSel) this._absSel.value = ''; if (this._absName) this._absName.value = ''; if (this._absReason) this._absReason.value = '';
+        };
+        const instPool = store.members.filter(m => m.instrumentalist);
+        v.evNoInstOptions = instPool.length === 0;
+        v.evInstOptions = instPool.map(m => {
+          const on = (ev.insts || []).includes(m.id);
+          return {
+            label: m.name + (m.instrument ? ' · ' + m.instrument : ''),
+            style: this.pill(on, '#fc4c0e'),
+            toggle: () => this.mutate(st => { const x = st.events.find(y => y.id === ev.id); if (!x) return; x.insts = x.insts || []; const j = x.insts.indexOf(m.id); if (j >= 0) x.insts.splice(j, 1); else x.insts.push(m.id); })
+          };
+        });
+        v.evEdit = () => this.openEform(ev);
+        v.evDeleteLabel = S.confirm ? 'Tap again to confirm delete' : 'Delete';
+        v.evDelete = () => {
+          if (!S.confirm) { this.setState({ confirm: true }); return; }
+          this.mutate(st => { st.events = st.events.filter(y => y.id !== ev.id); });
+          this.setState({ modal: null, confirm: false });
+        };
+      }
+    }
+
+    if (v.mEform) {
+      const f = this.form || {};
+      v.eformTitle = M.id ? 'Edit schedule' : 'Add schedule';
+      v.fDate = f.date; v.fTime = f.time; v.fType = f.type; v.fGroup = f.group; v.fVenue = f.venue; v.fOccasion = f.occasion; v.fExpected = f.expected;
+      v.saveEform = () => {
+        const f2 = this.form || {};
+        if (!f2.date) { this.setState({ formError: 'Please choose a date.' }); return; }
+        if (!f2.time) { this.setState({ formError: 'Please choose a time.' }); return; }
+        const exp = Math.max(1, Number(f2.expected) || this.defExpected());
+        const g = this.G(f2.group);
+        const venue = (f2.venue || '').trim() || (g ? g.venue : 'San Agustin Parish');
+        this.mutate(st => {
+          if (M.id) {
+            const x = st.events.find(y => y.id === M.id);
+            if (x) Object.assign(x, { date: f2.date, time: f2.time, type: f2.type || 'mass', group: f2.group || '', venue, occasion: (f2.occasion || '').trim(), expected: exp });
+          } else {
+            st.events.push({ id: 'e' + Date.now(), date: f2.date, time: f2.time, type: f2.type || 'mass', group: f2.group || '', venue, occasion: (f2.occasion || '').trim(), expected: exp, absences: [], insts: [], status: 'active' });
+          }
+        });
+        this.setState({ modal: M.id ? { t: 'event', id: M.id } : null, formError: '' });
+      };
+    }
+
+    if (v.mMform) {
+      const f = this.form || {};
+      v.mformTitle = M.id ? 'Edit member' : 'Add member';
+      v.fName = f.name; v.fGroup = f.group; v.fVoice = f.voice; v.fRole = f.role; v.fInst = !!f.instrumentalist; v.fInstrument = f.instrument;
+      const bp = S.bdPick || { open: false, m: Number(f.bMonth) || (new Date().getMonth() + 1) };
+      v.fBdayText = this.fmtBday(Number(f.bMonth) || 0, Number(f.bDay) || 0);
+      v.bdayExample = this.fmtBday(3, 9);
+      v.bdayPlaceholder = 'e.g. ' + v.bdayExample + ' or 3/9';
+      v.bdayErr = !!S.bdErr;
+      v.bdayInputRef = el => { this._bdayIn = el; };
+      v.onBdayKey = e => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } };
+      v.onBdayBlur = e => {
+        const r = this.parseBday(e.target.value);
+        if (r === null) { this.setState({ bdErr: true }); return; }
+        this.form = this.form || {};
+        this.form.bMonth = r.m || ''; this.form.bDay = r.d || '';
+        e.target.value = this.fmtBday(r.m, r.d);
+        if (S.bdErr) this.setState({ bdErr: false });
+      };
+      v.bdayPickerOpen = !!bp.open;
+      v.toggleBdayPicker = () => this.setState({ bdPick: { open: !bp.open, m: Number((this.form || {}).bMonth) || bp.m || 1 }, bdErr: false });
+      v.bpMonthLabel = (() => { try { return new Date(2000, bp.m - 1, 1).toLocaleDateString(undefined, { month: 'long' }); } catch (e) { return this.MONTHS()[bp.m - 1]; } })();
+      v.bpPrev = () => this.setState({ bdPick: { open: true, m: bp.m === 1 ? 12 : bp.m - 1 } });
+      v.bpNext = () => this.setState({ bdPick: { open: true, m: bp.m === 12 ? 1 : bp.m + 1 } });
+      v.bpDays = [];
+      const dInB = new Date(2000, bp.m, 0).getDate();
+      for (let day = 1; day <= dInB; day++) {
+        const sel = Number(f.bMonth) === bp.m && Number(f.bDay) === day;
+        v.bpDays.push({
+          num: String(day),
+          style: sel
+            ? { minHeight: '38px', border: 'none', borderRadius: '8px', background: '#bc0700', color: '#ffffff', fontSize: '13px', fontWeight: 800, cursor: 'pointer', padding: 0 }
+            : { minHeight: '38px', border: 'none', borderRadius: '8px', background: 'var(--card)', color: 'var(--text)', fontSize: '13px', fontWeight: 700, cursor: 'pointer', padding: 0 },
+          click: (dd => () => {
+            this.form = this.form || {};
+            this.form.bMonth = bp.m; this.form.bDay = dd;
+            if (this._bdayIn) this._bdayIn.value = this.fmtBday(bp.m, dd);
+            this.setState({ bdPick: { open: false, m: bp.m }, bdErr: false });
+          })(day)
+        });
+      }
+      v.bpClear = () => { this.form = this.form || {}; this.form.bMonth = ''; this.form.bDay = ''; if (this._bdayIn) this._bdayIn.value = ''; this.setState({ bdPick: { open: false, m: bp.m }, bdErr: false }); };
+      v.bpClose = () => this.setState({ bdPick: { open: false, m: bp.m } });
+      v.mformCanDelete = !!M.id;
+      v.memDeleteLabel = S.confirm ? 'Tap again to confirm' : 'Delete member';
+      v.deleteMember = () => {
+        if (!S.confirm) { this.setState({ confirm: true }); return; }
+        this.mutate(st => { st.members = st.members.filter(m => m.id !== M.id); st.events.forEach(e => { e.insts = (e.insts || []).filter(id => id !== M.id); }); });
+        this.setState({ modal: null, confirm: false });
+      };
+      v.saveMform = () => {
+        const f2 = this.form || {};
+        if (!(f2.name || '').trim()) { this.setState({ formError: 'Please enter the member\'s name.' }); return; }
+        const bM = Number(f2.bMonth) || 0, bD = Math.min(31, Math.max(0, Number(f2.bDay) || 0));
+        const rec = { name: f2.name.trim(), group: f2.group || 'CSA', voice: f2.voice || '', role: (f2.role || '').trim(), bMonth: bM && bD ? bM : 0, bDay: bM && bD ? bD : 0, instrumentalist: !!f2.instrumentalist, instrument: (f2.instrument || '').trim() };
+        this.mutate(st => {
+          if (M.id) { const x = st.members.find(m => m.id === M.id); if (x) Object.assign(x, rec); }
+          else st.members.push(Object.assign({ id: 'm' + Date.now() }, rec));
+        });
+        this.setState({ modal: null, formError: '' });
+      };
+    }
+
+    if (v.mSettings) {
+      v.setThreshold = S.thDraft != null ? S.thDraft : TH;
+      v.onThDrag = e => this.setState({ thDraft: Number(e.target.value) });
+      v.onThCommit = e => {
+        const n = Number(e.target.value);
+        this.mutate(st => { st.settings = st.settings || { pin: '1234' }; st.settings.cancelThreshold = n; });
+        this.setState({ thDraft: null });
+      };
+      const DE = this.defExpected();
+      v.setExpected = String(DE);
+      v.expMinus = () => this.mutate(st => { st.settings = st.settings || { pin: '1234' }; st.settings.defaultExpected = Math.max(1, DE - 1); });
+      v.expPlus = () => this.mutate(st => { st.settings = st.settings || { pin: '1234' }; st.settings.defaultExpected = Math.min(60, DE + 1); });
+    }
+
+    if (v.mPin) {
+      v.pinCurRef = el => { this._pinCur = el; };
+      v.pinNewRef = el => { this._pinNew = el; };
+      v.savePin = () => {
+        const cur = this._pinCur ? this._pinCur.value.trim() : '';
+        const nw = this._pinNew ? this._pinNew.value.trim() : '';
+        if (cur !== (store.settings.pin || '1234')) { this.setState({ formError: 'Current PIN is incorrect.' }); return; }
+        if (nw.length < 4) { this.setState({ formError: 'New PIN must be at least 4 characters.' }); return; }
+        this.mutate(st => { st.settings.pin = nw; });
+        this.setState({ modal: null, formError: '' });
+      };
+    }
+
+    return v;
+  }
+}
+</script>
+</body>
+</html>
