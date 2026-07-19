@@ -10,6 +10,8 @@
 <helmet>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PLMM — San Agustin Parish, Parian</title>
+<link rel="icon" type="image/png" href="assets/logo.png">
+<link rel="apple-touch-icon" href="assets/logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
@@ -24,6 +26,11 @@ input::-webkit-date-and-time-value{text-align:left}
 @media (min-width:1100px){body{zoom:1.12}}
 @keyframes plmmFade{from{opacity:0}}
 @keyframes plmmSlide{from{transform:translateX(100%)}}
+[contenteditable="true"]:empty::before{content:attr(data-ph);color:var(--muted2);pointer-events:none}
+[contenteditable="true"] h1{font-size:26px;margin:12px 0 6px;line-height:1.25}
+[contenteditable="true"] h2{font-size:21px;margin:10px 0 5px;line-height:1.3}
+[contenteditable="true"] h3{font-size:17px;margin:9px 0 4px;line-height:1.3}
+[contenteditable="true"] p{margin:0 0 7px}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -50,21 +57,26 @@ input::-webkit-date-and-time-value{text-align:left}
 
   <sc-if value="{{ notShot }}" hint-placeholder-val="{{ true }}">
   <div style="background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:40">
-    <div style="max-width:1300px;margin:0 auto;padding:12px 16px 8px;display:flex;align-items:center;gap:11px">
-      <img src="assets/logo.png" alt="" style="height:42px;flex:none">
-      <sc-if value="{{ deskNav }}" hint-placeholder-val="{{ true }}">
-      <div style="min-width:0;flex:1">
-        <div style="font-weight:800;font-size:clamp(14px,3.6vw,20px);line-height:1.15;color:var(--redink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Parish Liturgical Music Ministry</div>
-        <div style="font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted2);font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">San Agustin Parish · Parian</div>
+    <div style="max-width:1300px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:12px">
+      <div style="display:flex;align-items:center;gap:11px;flex:1;min-width:0">
+        <img src="assets/logo.png" alt="" style="height:42px;flex:none">
+        <sc-if value="{{ deskNav }}" hint-placeholder-val="{{ true }}">
+        <div style="min-width:0">
+          <div style="font-weight:800;font-size:clamp(14px,1.4vw,19px);line-height:1.15;color:var(--redink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Parish Liturgical Music Ministry</div>
+          <div style="font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted2);font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">San Agustin Parish · Parian</div>
+        </div>
+        </sc-if>
       </div>
-      </sc-if>
-      <div style="flex:1"></div>
       <sc-if value="{{ deskNav }}" hint-placeholder-val="{{ true }}">
-      <div title="{{ syncTitle }}" style="display:flex;align-items:center;gap:6px;background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:5px 10px;flex:none">
-        <span style="{{ syncDotStyle }}"></span>
-        <span style="font-size:11px;font-weight:800;color:var(--muted);white-space:nowrap">{{ syncLabel }}</span>
+      <div style="display:flex;align-items:center;gap:24px;flex:none">
+        <button onClick="{{ goDash }}" style="{{ navDash }}" style-hover="color:var(--redink)">Dashboard</button>
+        <button onClick="{{ goCal }}" style="{{ navCal }}" style-hover="color:var(--redink)">Calendar</button>
+        <button onClick="{{ goMem }}" style="{{ navMem }}" style-hover="color:var(--redink)">Members</button>
+        <button onClick="{{ goMtg }}" style="{{ navMtg }}" style-hover="color:var(--redink)">Meetings</button>
       </div>
-      <button onClick="{{ openSettings }}" title="Settings — threshold, PIN, theme" style="flex:none;padding:5px 14px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--muted);font-size:11px;font-weight:800;letter-spacing:0.6px;cursor:pointer;white-space:nowrap" style-hover="border-color:var(--redink);color:var(--redink)">⚙ Settings</button>
+      <div style="flex:1;display:flex;justify-content:flex-end;min-width:0">
+        <button onClick="{{ openSettings }}" title="Settings — threshold, PIN, theme" aria-label="Settings" style="border:none;background:none;cursor:pointer;color:var(--muted);padding:8px;display:flex;align-items:center;border-radius:999px" style-hover="color:var(--redink)"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
+      </div>
       </sc-if>
       <sc-if value="{{ mobNav }}" hint-placeholder-val="{{ false }}">
       <button onClick="{{ toggleMenu }}" aria-label="Menu" style="flex:none;width:44px;height:44px;border:none;background:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:0">
@@ -73,13 +85,6 @@ input::-webkit-date-and-time-value{text-align:left}
       </button>
       </sc-if>
     </div>
-    <sc-if value="{{ deskNav }}" hint-placeholder-val="{{ true }}">
-    <div style="max-width:1300px;margin:0 auto;padding:0 16px 10px;display:flex;gap:8px">
-      <button onClick="{{ goDash }}" style="{{ tabDash }}">Dashboard</button>
-      <button onClick="{{ goCal }}" style="{{ tabCal }}">Calendar</button>
-      <button onClick="{{ goMem }}" style="{{ tabMem }}">Members</button>
-    </div>
-    </sc-if>
   </div>
   </sc-if>
 
@@ -96,13 +101,10 @@ input::-webkit-date-and-time-value{text-align:left}
     <button onClick="{{ menuDash }}" style="{{ drawerDash }}">Dashboard</button>
     <button onClick="{{ menuCal }}" style="{{ drawerCal }}">Calendar</button>
     <button onClick="{{ menuMem }}" style="{{ drawerMem }}">Members</button>
+    <button onClick="{{ menuMtg }}" style="{{ drawerMtg }}">Meetings</button>
     <div style="height:1px;background:var(--line2);margin:6px 0"></div>
     <button onClick="{{ menuSettings }}" style="{{ drawerBtn }}">⚙ Settings</button>
     <div style="flex:1"></div>
-    <div style="display:flex;align-items:center;gap:7px;background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:7px 12px">
-      <span style="{{ syncDotStyle }}"></span>
-      <span style="font-size:12px;font-weight:800;color:var(--muted)">{{ syncLabel }}</span>
-    </div>
   </div>
   </sc-if>
 
@@ -502,6 +504,129 @@ input::-webkit-date-and-time-value{text-align:left}
   </div>
   </sc-if>
 
+  <sc-if value="{{ isMtg }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Meetings" style="max-width:1300px;margin:0 auto;padding:16px 16px 72px;display:flex;flex-direction:column;gap:12px;box-sizing:border-box">
+    <sc-if value="{{ mtList }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <div style="font-weight:800;font-size:25px">Meeting Notes</div>
+      <div style="flex:1"></div>
+      <button onClick="{{ mtNew }}" style="padding:9px 18px;border:none;border-radius:999px;background:#bc0700;color:#ffffff;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap" style-hover="background:#a00600">+ New meeting</button>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden">
+      <sc-for list="{{ mtRows }}" as="mt" hint-placeholder-count="2">
+        <div onClick="{{ mt.open }}" style="display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--line2);cursor:pointer" style-hover="background:var(--soft)">
+          <div style="width:44px;text-align:center;flex:none">
+            <div style="font-size:10px;font-weight:800;letter-spacing:1px;color:var(--muted2)">{{ mt.mon }}</div>
+            <div style="font-weight:800;font-size:21px;line-height:1">{{ mt.day }}</div>
+          </div>
+          <div style="min-width:0;flex:1">
+            <div style="font-weight:800;font-size:15px">{{ mt.title }}</div>
+            <div style="font-size:12.5px;color:var(--muted)">{{ mt.sub }}</div>
+          </div>
+          <div style="color:var(--muted2);font-size:13px;font-weight:800;flex:none">Open →</div>
+        </div>
+      </sc-for>
+      <sc-if value="{{ mtEmpty }}" hint-placeholder-val="{{ false }}"><div style="padding:18px;color:var(--muted2);font-size:13.5px">No meeting notes yet. Start one with "+ New meeting".</div></sc-if>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ mtEditor }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <button onClick="{{ mtBack }}" style="padding:8px 16px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);color:var(--muted);font-size:12.5px;font-weight:800;cursor:pointer;white-space:nowrap">← All meetings</button>
+      <div style="flex:1"></div>
+      <button onClick="{{ mtDelete }}" style="padding:8px 16px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);color:var(--redink);font-size:12.5px;font-weight:800;cursor:pointer;white-space:nowrap">{{ mtDeleteLabel }}</button>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:16px;box-sizing:border-box">
+      <div style="display:flex;gap:11px;flex-wrap:wrap">
+        <div style="flex:1;min-width:220px"><div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Meeting for / Title</div><input defaultValue="{{ mtTitleVal }}" onChange="{{ mtOnTitle }}" placeholder="e.g. Coordinators' monthly meeting" style="width:100%;box-sizing:border-box;padding:9px 10px;min-height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:15px;font-weight:700"></div>
+        <div style="flex:none;min-width:170px"><div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Meeting date</div><input type="date" defaultValue="{{ mtDateVal }}" onChange="{{ mtOnDate }}" style="display:block;width:100%;box-sizing:border-box;padding:9px 10px;height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:14px;background:var(--card);text-align:left"></div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <div style="font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted2)">Attendees ({{ mtAttCount }})</div>
+          <div style="flex:1"></div>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:800;color:var(--muted)"><input type="checkbox" checked="{{ mtShowGroups }}" onChange="{{ mtToggleGroups }}" style="width:15px;height:15px;accent-color:#bc0700">Show choir groups</label>
+        </div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap">
+          <sc-for list="{{ mtAtt }}" as="at" hint-placeholder-count="3">
+            <span style="{{ at.style }}"><sc-if value="{{ at.showG }}" hint-placeholder-val="{{ false }}"><span style="{{ at.gStyle }}">{{ at.gLabel }}</span></sc-if><span>{{ at.name }}</span><button onClick="{{ at.remove }}" title="Remove attendee" style="border:none;background:none;color:var(--muted2);font-size:15px;font-weight:800;cursor:pointer;padding:0 5px;line-height:1" style-hover="color:var(--redink)">×</button></span>
+          </sc-for>
+          <sc-if value="{{ mtAttEmpty }}" hint-placeholder-val="{{ false }}"><span style="color:var(--muted2);font-size:13px;padding:5px 0">No attendees yet — add them below.</span></sc-if>
+        </div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap">
+          <select ref="{{ mtSelRef }}" style="flex:1;min-width:170px;box-sizing:border-box;padding:9px 10px;min-height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:13.5px;background:var(--card)">
+            <option value="">Select member…</option>
+            <sc-for list="{{ mtAttOptions }}" as="o" hint-placeholder-count="0"><option value="{{ o.val }}">{{ o.label }}</option></sc-for>
+          </select>
+          <input ref="{{ mtNameRef }}" placeholder="…or type a name (guests too)" onKeyDown="{{ mtNameKey }}" style="flex:1;min-width:150px;box-sizing:border-box;padding:9px 10px;min-height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:13.5px">
+          <button onClick="{{ mtAddAtt }}" style="padding:0 18px;min-height:44px;border:1.5px solid #bc0700;border-radius:999px;background:var(--card);color:var(--redink);font-size:12.5px;font-weight:800;cursor:pointer">Add</button>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted2)">Agenda</div>
+        <sc-for list="{{ mtAgendas }}" as="ag" hint-placeholder-count="2">
+          <div style="display:flex;align-items:center;gap:9px;background:var(--soft);border-radius:9px;padding:8px 11px">
+            <span style="font-weight:800;color:var(--redink);font-size:13px;flex:none">{{ ag.num }}</span>
+            <div style="flex:1;font-size:13.5px;font-weight:700;min-width:0">{{ ag.text }}</div>
+            <button onClick="{{ ag.remove }}" title="Remove agenda item" style="border:none;background:none;color:var(--muted2);font-size:15px;font-weight:800;cursor:pointer;padding:0 4px;line-height:1" style-hover="color:var(--redink)">×</button>
+          </div>
+        </sc-for>
+        <div style="display:flex;gap:7px">
+          <input ref="{{ mtAgRef }}" placeholder="Add an agenda item…" onKeyDown="{{ mtAgKey }}" style="flex:1;min-width:0;box-sizing:border-box;padding:9px 10px;min-height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:13.5px">
+          <button onClick="{{ mtAddAg }}" style="padding:0 18px;min-height:44px;border:1.5px solid #bc0700;border-radius:999px;background:var(--card);color:var(--redink);font-size:12.5px;font-weight:800;cursor:pointer;white-space:nowrap">+ Add</button>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted2)">Notes</div>
+        <div style="border:1px solid var(--line);border-radius:12px">
+          <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;padding:7px 9px;border-bottom:1px solid var(--line2);background:var(--soft);border-radius:12px 12px 0 0;position:relative">
+            <select onChange="{{ tbBlock }}" title="Paragraph style" style="padding:6px 8px;min-height:32px;border:1px solid var(--bstrong);border-radius:8px;font-size:12.5px;font-weight:700;background:var(--card);cursor:pointer">
+              <option value="P">Normal</option>
+              <option value="H1">Heading 1</option>
+              <option value="H2">Heading 2</option>
+              <option value="H3">Subheading</option>
+            </select>
+            <select onChange="{{ tbSize }}" title="Text size" style="padding:6px 8px;min-height:32px;border:1px solid var(--bstrong);border-radius:8px;font-size:12.5px;font-weight:700;background:var(--card);cursor:pointer">
+              <option value="">Size…</option>
+              <option value="2">Small</option>
+              <option value="3">Normal</option>
+              <option value="4">Medium</option>
+              <option value="5">Large</option>
+              <option value="6">X-Large</option>
+            </select>
+            <div style="width:1px;height:20px;background:var(--line);margin:0 3px"></div>
+            <button onMouseDown="{{ tbPrevent }}" onClick="{{ tbBold }}" title="Bold" style="{{ tbBtn }}"><b>B</b></button>
+            <button onMouseDown="{{ tbPrevent }}" onClick="{{ tbItalic }}" title="Italic" style="{{ tbBtn }}"><i>I</i></button>
+            <button onMouseDown="{{ tbPrevent }}" onClick="{{ tbUnder }}" title="Underline" style="{{ tbBtn }}"><u>U</u></button>
+            <div style="width:1px;height:20px;background:var(--line);margin:0 3px"></div>
+            <button onMouseDown="{{ tbPrevent }}" onClick="{{ tbFore }}" title="Text color" style="{{ tbBtn }}"><span style="font-weight:800;border-bottom:3px solid #bc0700;padding:0 1px">A</span></button>
+            <button onMouseDown="{{ tbPrevent }}" onClick="{{ tbHi }}" title="Highlight" style="{{ tbBtn }}"><span style="font-weight:800;background:#fff3a3;color:#111111;padding:0 3px">A</span></button>
+            <button onMouseDown="{{ tbPrevent }}" onClick="{{ tbClear }}" title="Clear formatting" style="{{ tbBtn }}">Clear</button>
+            <sc-if value="{{ palOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;top:calc(100% + 4px);left:9px;z-index:30;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px;display:flex;gap:6px;flex-wrap:wrap;box-shadow:0 10px 28px rgba(0,0,0,0.18);max-width:240px">
+              <sc-for list="{{ palSwatches }}" as="sw" hint-placeholder-count="8"><button onMouseDown="{{ tbPrevent }}" onClick="{{ sw.click }}" title="{{ sw.title }}" style="{{ sw.style }}"></button></sc-for>
+            </div>
+            </sc-if>
+          </div>
+          <div ref="{{ notesRef }}" contentEditable="true" data-ph="Type the meeting notes here…" onInput="{{ notesInput }}" onBlur="{{ notesBlur }}" style="min-height:260px;padding:14px 16px;font-size:15px;line-height:1.65;outline:none;overflow-wrap:break-word;border-radius:0 0 12px 12px"></div>
+        </div>
+        <div style="font-size:11.5px;color:var(--muted2)">Notes save automatically.</div>
+      </div>
+    </div>
+    </sc-if>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ notShot }}" hint-placeholder-val="{{ true }}">
+  <div title="{{ syncTitle }}" style="position:fixed;bottom:14px;right:14px;z-index:60;display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 12px;box-shadow:0 4px 16px rgba(0,0,0,0.12)">
+    <span style="{{ syncDotStyle }}"></span>
+    <span style="font-size:11px;font-weight:800;color:var(--muted);white-space:nowrap">{{ syncLabel }}</span>
+  </div>
+  </sc-if>
+
 </div>
 </sc-if>
 
@@ -747,6 +872,7 @@ class Component extends DCLogic {
     try { store = JSON.parse(localStorage.getItem('plmm-data-v1')); } catch (e) {}
     if (!store || !Array.isArray(store.members)) store = this.seed();
     if (!store.settings) store.settings = { pin: '1234' };
+    if (!Array.isArray(store.meetings)) store.meetings = [];
     let unlocked = false;
     try { unlocked = sessionStorage.getItem('plmm-unlocked') === '1'; } catch (e) {}
     let theme = 'light';
@@ -754,7 +880,7 @@ class Component extends DCLogic {
     let ws0 = 0;
     try { ws0 = Number(localStorage.getItem('plmm-weekstart')) || 0; } catch (e) {}
     const t = new Date();
-    return { store, unlocked, theme, isMobile: (typeof window !== 'undefined' && window.innerWidth < 760), selDay: this.ds(t), page: 'dash', vy: t.getFullYear(), vm: t.getMonth(), checks: { CSA: true, SAC: true, SMC: true, HSR: true, SCC: true, GC: true }, calView: 'month', showLegend: true, menuOpen: false, weekStartDow: ws0, miniVm: t.getMonth(), miniVy: t.getFullYear(), pickerOpen: false, mvoice: 'ALL', minst: false, msort: 'az', filter: 'ALL', mfilter: 'ALL', q: '', shot: false, modal: null, pinError: false, formError: '', confirm: false, sync: 'local' };
+    return { store, unlocked, theme, isMobile: (typeof window !== 'undefined' && window.innerWidth < 760), selDay: this.ds(t), page: 'dash', vy: t.getFullYear(), vm: t.getMonth(), checks: { CSA: true, SAC: true, SMC: true, HSR: true, SCC: true, GC: true }, calView: 'month', showLegend: true, menuOpen: false, weekStartDow: ws0, miniVm: t.getMonth(), miniVy: t.getFullYear(), pickerOpen: false, mvoice: 'ALL', minst: false, msort: 'az', filter: 'ALL', mfilter: 'ALL', q: '', shot: false, modal: null, pinError: false, formError: '', confirm: false, sync: 'local', meetOpen: null, pal: null };
   }
 
   GROUPS() {
@@ -830,6 +956,20 @@ class Component extends DCLogic {
     this.setState({ store: next });
     try { localStorage.setItem('plmm-data-v1', JSON.stringify(next)); } catch (e) {}
     if (this.docRef) this.docRef.set(next).catch(() => this.setState({ sync: 'error' }));
+  }
+
+  queueMeet(id, patch, ms) {
+    if (this._mqId && this._mqId !== id) this.flushMeet();
+    this._mq = Object.assign(this._mq || {}, patch); this._mqId = id;
+    clearTimeout(this._mqT);
+    this._mqT = setTimeout(() => this.flushMeet(), ms == null ? 600 : ms);
+  }
+  flushMeet() {
+    clearTimeout(this._mqT);
+    const patch = this._mq, id = this._mqId;
+    this._mq = null; this._mqId = null;
+    if (!patch || !id) return;
+    this.mutate(st => { const m = (st.meetings || []).find(x => x.id === id); if (m) Object.assign(m, patch); });
   }
 
   ds(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
@@ -951,7 +1091,8 @@ class Component extends DCLogic {
 
     const v = {
       locked, appVisible: !locked, notShot: !S.shot, shot: S.shot, threshold: TH,
-      isDash: S.page === 'dash', isCal: S.page === 'cal', isMembers: S.page === 'mem',
+      isDash: S.page === 'dash', isCal: S.page === 'cal', isMembers: S.page === 'mem', isMtg: S.page === 'mtg',
+      goMtg: () => this.setState({ page: 'mtg' }),
       goDash: () => this.setState({ page: 'dash' }),
       goCal: () => this.setState({ page: 'cal' }),
       goMem: () => this.setState({ page: 'mem' }),
@@ -975,9 +1116,9 @@ class Component extends DCLogic {
       formError: !!S.formError, formErrorMsg: S.formError
     };
 
-    // tabs
-    const tab = act => ({ flex: '1', maxWidth: '170px', padding: '9px 0', borderRadius: '999px', border: '1.5px solid ' + (act ? '#bc0700' : 'var(--line)'), background: act ? '#bc0700' : 'var(--card)', color: act ? '#ffffff' : 'var(--muted)', fontSize: '13.5px', fontWeight: 800, cursor: 'pointer', letterSpacing: '0.3px' });
-    v.tabDash = tab(v.isDash); v.tabCal = tab(v.isCal); v.tabMem = tab(v.isMembers);
+    // nav links
+    const navL = act => ({ border: 'none', background: 'none', cursor: 'pointer', padding: '7px 1px 5px', fontSize: '14px', fontWeight: 800, letterSpacing: '0.2px', color: act ? 'var(--redink)' : 'var(--muted)', borderBottom: act ? '2px solid #bc0700' : '2px solid transparent', whiteSpace: 'nowrap' });
+    v.navDash = navL(v.isDash); v.navCal = navL(v.isCal); v.navMem = navL(v.isMembers); v.navMtg = navL(v.isMtg);
     v.themeLabel = S.theme === 'dark' ? 'Light mode' : 'Dark mode';
     v.toggleTheme = () => {
       const t2 = S.theme === 'dark' ? 'light' : 'dark';
@@ -992,11 +1133,12 @@ class Component extends DCLogic {
     const bl = { width: '22px', height: '2.5px', borderRadius: '2px', background: 'var(--text)', display: 'block', flex: 'none' };
     v.burger1 = bl; v.burger2 = bl;
     const dItem = act => ({ display: 'block', width: '100%', textAlign: 'left', padding: '11px 13px', borderRadius: '10px', border: 'none', background: act ? '#bc0700' : 'transparent', color: act ? '#ffffff' : 'var(--text)', fontSize: '15px', fontWeight: 800, cursor: 'pointer' });
-    v.drawerDash = dItem(v.isDash); v.drawerCal = dItem(v.isCal); v.drawerMem = dItem(v.isMembers);
+    v.drawerDash = dItem(v.isDash); v.drawerCal = dItem(v.isCal); v.drawerMem = dItem(v.isMembers); v.drawerMtg = dItem(v.isMtg);
     v.drawerBtn = { display: 'block', width: '100%', textAlign: 'left', padding: '11px 13px', borderRadius: '10px', border: '1px solid var(--line)', background: 'var(--card)', color: 'var(--muted)', fontSize: '14px', fontWeight: 800, cursor: 'pointer' };
     v.menuDash = () => this.setState({ page: 'dash', menuOpen: false });
     v.menuCal = () => this.setState({ page: 'cal', menuOpen: false });
     v.menuMem = () => this.setState({ page: 'mem', menuOpen: false });
+    v.menuMtg = () => this.setState({ page: 'mtg', menuOpen: false });
     v.menuPin = () => { this.setState({ menuOpen: false }); this.openModal({ t: 'pin' }); };
     v.menuSettings = () => { this.setState({ menuOpen: false }); this.openModal({ t: 'settings' }); };
 
@@ -1365,6 +1507,119 @@ class Component extends DCLogic {
     });
     v.mrowsEmpty = filtered.length === 0;
     v.mcountLine = S.mfilter === 'ALL' ? filtered.length + ' Members' : this.gName(S.mfilter) + ' — ' + filtered.length + ' Member' + (filtered.length === 1 ? '' : 's');
+
+    // ---- Meetings ----
+    const meetings = store.meetings || [];
+    v.mtNew = () => {
+      const id = 'mt' + Date.now();
+      this.mutate(st => { st.meetings = st.meetings || []; st.meetings.push({ id, date: todayStr, title: '', attendees: [], agendas: [], notes: '', showGroups: true, created: Date.now() }); });
+      this.setState({ meetOpen: id, confirm: false, pal: null });
+    };
+    const mtCur = meetings.find(m => m.id === S.meetOpen);
+    v.mtList = v.isMtg && !mtCur;
+    v.mtEditor = v.isMtg && !!mtCur;
+    v.mtRows = meetings.slice().sort((a, b) => (b.date + '').localeCompare(a.date + '') || (b.created || 0) - (a.created || 0)).map(m => {
+      const d = this.parse(m.date);
+      const na = (m.attendees || []).length, ng = (m.agendas || []).length;
+      return {
+        mon: this.MONTHS()[d.getMonth()].slice(0, 3).toUpperCase(),
+        day: String(d.getDate()),
+        title: (m.title || '').trim() || 'Untitled meeting',
+        sub: this.longDate(m.date) + ' · ' + na + ' attendee' + (na === 1 ? '' : 's') + ' · ' + ng + ' agenda item' + (ng === 1 ? '' : 's'),
+        open: () => this.setState({ meetOpen: m.id, confirm: false, pal: null })
+      };
+    });
+    v.mtEmpty = meetings.length === 0;
+    if (mtCur) {
+      const mid = mtCur.id;
+      v.mtBack = () => {
+        if (this._notesEl) { this._mq = Object.assign(this._mq || {}, { notes: this._notesEl.innerHTML }); this._mqId = mid; }
+        this.flushMeet();
+        this.setState({ meetOpen: null, confirm: false, pal: null });
+      };
+      v.mtTitleVal = mtCur.title;
+      v.mtDateVal = mtCur.date;
+      v.mtOnTitle = e => this.queueMeet(mid, { title: e.target.value });
+      v.mtOnDate = e => { const val = e.target.value; if (val) this.queueMeet(mid, { date: val }, 200); };
+      v.mtDeleteLabel = S.confirm ? 'Tap again to confirm delete' : 'Delete meeting';
+      v.mtDelete = () => {
+        if (!S.confirm) { this.setState({ confirm: true }); return; }
+        clearTimeout(this._mqT); this._mq = null; this._mqId = null; this._notesFor = null;
+        this.mutate(st => { st.meetings = (st.meetings || []).filter(m => m.id !== mid); });
+        this.setState({ meetOpen: null, confirm: false, pal: null });
+      };
+      const showG = mtCur.showGroups !== false;
+      v.mtShowGroups = showG;
+      v.mtToggleGroups = () => { this.flushMeet(); this.mutate(st => { const m = st.meetings.find(x => x.id === mid); if (m) m.showGroups = !showG; }); };
+      v.mtAttCount = String((mtCur.attendees || []).length);
+      v.mtAtt = (mtCur.attendees || []).map((at, i) => ({
+        name: at.name,
+        showG: showG && !!at.group,
+        gLabel: at.group,
+        gStyle: { background: this.gColor(at.group), color: '#ffffff', borderRadius: '999px', padding: '2px 8px', fontSize: '10px', fontWeight: 800, letterSpacing: '0.4px', flex: 'none' },
+        style: { display: 'inline-flex', alignItems: 'center', gap: '7px', background: 'var(--soft)', border: '1px solid var(--line)', borderRadius: '999px', padding: '5px 7px 5px ' + (showG && at.group ? '7px' : '13px'), fontSize: '13px', fontWeight: 700 },
+        remove: () => { this.flushMeet(); this.mutate(st => { const m = st.meetings.find(x => x.id === mid); if (m) m.attendees.splice(i, 1); }); }
+      }));
+      v.mtAttEmpty = (mtCur.attendees || []).length === 0;
+      const attNames = (mtCur.attendees || []).map(a => a.name);
+      v.mtAttOptions = store.members.filter(m => !attNames.includes(m.name)).map(m => ({ val: m.name + '|' + m.group, label: m.name + ' (' + m.group + ')' }));
+      v.mtSelRef = el => { this._mtSel = el; };
+      v.mtNameRef = el => { this._mtName = el; };
+      v.mtAddAtt = () => {
+        const typed = this._mtName ? this._mtName.value.trim() : '';
+        let name = typed, group = '';
+        if (!name && this._mtSel && this._mtSel.value) { const p = this._mtSel.value.split('|'); name = p[0]; group = p[1] || ''; }
+        else if (typed) { const mem = store.members.find(m => m.name.toLowerCase() === typed.toLowerCase()); if (mem) group = mem.group; }
+        if (!name) return;
+        this.flushMeet();
+        this.mutate(st => { const m = st.meetings.find(x => x.id === mid); if (m && !m.attendees.some(a => a.name === name)) m.attendees.push({ name, group }); });
+        if (this._mtSel) this._mtSel.value = ''; if (this._mtName) this._mtName.value = '';
+      };
+      v.mtNameKey = e => { if (e.key === 'Enter') { e.preventDefault(); v.mtAddAtt(); } };
+      v.mtAgendas = (mtCur.agendas || []).map((t, i) => ({
+        num: (i + 1) + '.', text: t,
+        remove: () => { this.flushMeet(); this.mutate(st => { const m = st.meetings.find(x => x.id === mid); if (m) m.agendas.splice(i, 1); }); }
+      }));
+      v.mtAgRef = el => { this._mtAg = el; };
+      v.mtAddAg = () => {
+        const t = this._mtAg ? this._mtAg.value.trim() : '';
+        if (!t) return;
+        this.flushMeet();
+        this.mutate(st => { const m = st.meetings.find(x => x.id === mid); if (m) m.agendas.push(t); });
+        if (this._mtAg) this._mtAg.value = '';
+      };
+      v.mtAgKey = e => { if (e.key === 'Enter') { e.preventDefault(); v.mtAddAg(); } };
+      v.notesRef = el => {
+        this._notesEl = el;
+        if (!el) { this._notesFor = null; return; }
+        if (this._notesFor !== mid) { el.innerHTML = mtCur.notes || ''; this._notesFor = mid; }
+      };
+      v.notesInput = e => this.queueMeet(mid, { notes: e.target.innerHTML }, 900);
+      v.notesBlur = e => this.queueMeet(mid, { notes: e.target.innerHTML }, 150);
+      const cmd = (c, val) => {
+        const el = this._notesEl; if (!el) return;
+        el.focus();
+        try { document.execCommand('styleWithCSS', false, c === 'foreColor' || c === 'hiliteColor'); } catch (e) {}
+        document.execCommand(c, false, val || null);
+        this.queueMeet(mid, { notes: el.innerHTML }, 900);
+      };
+      v.tbPrevent = e => e.preventDefault();
+      v.tbBtn = { minWidth: '32px', height: '32px', border: '1px solid var(--bstrong)', borderRadius: '8px', background: 'var(--card)', color: 'var(--text)', fontSize: '13px', cursor: 'pointer', padding: '0 7px' };
+      v.tbBold = () => cmd('bold'); v.tbItalic = () => cmd('italic'); v.tbUnder = () => cmd('underline');
+      v.tbBlock = e => { cmd('formatBlock', e.target.value); e.target.value = 'P'; };
+      v.tbSize = e => { if (e.target.value) cmd('fontSize', e.target.value); e.target.value = ''; };
+      v.tbClear = () => { cmd('removeFormat'); cmd('formatBlock', 'P'); };
+      v.tbFore = () => this.setState({ pal: S.pal === 'fore' ? null : 'fore' });
+      v.tbHi = () => this.setState({ pal: S.pal === 'hi' ? null : 'hi' });
+      v.palOpen = !!S.pal;
+      const fores = ['#111111', '#bc0700', '#fc4c0e', '#e09600', '#2e9e44', '#1f6feb', '#6d3fae', '#8a7a6f'];
+      const his = ['#fff3a3', '#ffd6cf', '#ffe2b8', '#d2f4d8', '#d6e6ff', '#f0dcff'];
+      v.palSwatches = (S.pal === 'hi' ? his.concat(['none']) : fores).map(cl => ({
+        title: cl === 'none' ? 'Remove highlight' : cl,
+        style: { width: '26px', height: '26px', borderRadius: '7px', border: cl === 'none' ? '1.5px dashed var(--bstrong)' : '1px solid var(--line)', background: cl === 'none' ? 'var(--card)' : cl, cursor: 'pointer', padding: 0 },
+        click: () => { cmd(S.pal === 'hi' ? 'hiliteColor' : 'foreColor', cl === 'none' ? 'transparent' : cl); this.setState({ pal: null }); }
+      }));
+    }
 
     // ---- Modals ----
     const M = S.modal;
