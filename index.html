@@ -358,7 +358,7 @@ input::-webkit-date-and-time-value{text-align:left}
           <div onClick="{{ c.click }}" onDragOver="{{ c.dragOver }}" onDrop="{{ c.drop }}" style="{{ c.style }}">
             <div style="display:flex;align-items:center;gap:5px;min-width:0">
               <span style="{{ c.numStyle }}">{{ c.num }}</span>
-              <sc-if value="{{ c.hasParish }}" hint-placeholder-val="{{ false }}"><span onClick="{{ c.pvClick }}" title="{{ c.pvTitle }}" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;font-weight:700;font-style:italic;color:var(--muted2);cursor:pointer">{{ c.pvLabel }}</span></sc-if>
+              <sc-if value="{{ c.hasParish }}" hint-placeholder-val="{{ false }}"><span onClick="{{ c.pvClick }}" title="{{ c.pvTitle }}" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;font-weight:700;color:var(--muted2);cursor:pointer">{{ c.pvLabel }}</span></sc-if>
             </div>
             <sc-for list="{{ c.bdays }}" as="bd" hint-placeholder-count="0">
               <div title="{{ bd.title }}" style="background:#fdb20b;color:#111111;border-radius:5px;padding:2px 5px;font-size:10px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ bd.label }}</div>
@@ -1504,7 +1504,7 @@ class Component extends DCLogic {
       v.cells.push({
         num: String(d.getDate()),
         hasParish: cellPvs.length > 0,
-        pvLabel: cellPvs.map(p => p.type).join(' · '),
+        pvLabel: cellPvs.map(p => p.occasion || p.type).join(' · '),
         pvTitle: cellPvs.map(p => (p.occasion ? p.occasion + ' (' + p.type + ')' : p.type)).join(' · ') + ' — parish-wide · click for details',
         pvClick: e => { e.stopPropagation(); if (cellPvs.length === 1) this.openModal({ t: 'pev', id: cellPvs[0].id }); else this.openModal({ t: 'day', date: dstr }); },
         style: { minHeight: 'clamp(74px,12vw,116px)', padding: '5px', borderRight: '1px solid var(--line2)', borderBottom: '1px solid var(--line2)', display: 'flex', flexDirection: 'column', gap: '3px', cursor: 'pointer', background: isToday ? 'var(--todaybg)' : isCur ? 'var(--card)' : 'var(--dim)', boxSizing: 'border-box', minWidth: 0 },
@@ -1558,7 +1558,7 @@ class Component extends DCLogic {
           drop: e => { e.preventDefault(); const g0 = this._dragGroup || ''; this.openEform(null, dstr, (g0 === 'GC' || !g0) ? [] : [g0]); this._dragGroup = null; },
           style: { minHeight: '260px', padding: '6px', borderRight: '1px solid var(--line2)', display: 'flex', flexDirection: 'column', gap: '5px', cursor: 'pointer', background: isToday ? 'var(--todaybg)' : 'var(--card)', boxSizing: 'border-box', minWidth: 0 },
           bdays: bds.map(m => ({ label: '♪ ' + m.name })),
-          events: pvsW.map(p => ({ l1: p.type, l2: 'Parish-wide', title: (p.occasion || p.type) + ' · ' + p.venue + ' — parish-wide event', style: { borderRadius: '8px', padding: '5px 7px', cursor: 'pointer', overflow: 'hidden', background: 'var(--line2)', color: 'var(--muted)', fontStyle: 'italic' }, click: e => { e.stopPropagation(); this.openModal({ t: 'pev', id: p.id }); } })).concat(evs.map(ev => {
+          events: pvsW.map(p => ({ l1: p.occasion || p.type, l2: 'Parish-wide', title: (p.occasion || p.type) + ' · ' + p.venue + ' — parish-wide event', style: { borderRadius: '8px', padding: '5px 7px', cursor: 'pointer', overflow: 'hidden', background: 'var(--line2)', color: 'var(--muted)' }, click: e => { e.stopPropagation(); this.openModal({ t: 'pev', id: p.id }); } })).concat(evs.map(ev => {
             const a = this.attend(ev);
             const cancelled = ev.status === 'cancelled';
             const low = !cancelled && a.pct < TH;
@@ -1599,7 +1599,7 @@ class Component extends DCLogic {
           days.push({
             num: String(day),
             style: st,
-            title: evs.length ? evs.length + ' schedule(s) — click to open' : pvsY.length ? pvsY.map(p => p.type).join(' · ') + ' — parish-wide' : hasB ? 'Birthday' : '',
+            title: evs.length ? evs.length + ' schedule(s) — click to open' : pvsY.length ? pvsY.map(p => p.occasion || p.type).join(' · ') + ' — parish-wide' : hasB ? 'Birthday' : '',
             click: () => { this.setState({ calView: 'month', vm: m, selDay: dstr }); if (evs.length || hasB || pvsY.length) this.openModal({ t: 'day', date: dstr }); }
           });
         }
@@ -1649,7 +1649,7 @@ class Component extends DCLogic {
         const bd = store.members.filter(m => m.bMonth === d.getMonth() + 1 && m.bDay === d.getDate());
         const pvsA = (store.parish || []).filter(p => p.date === dstr);
         if (!evs.length && !bd.length && !pvsA.length) continue;
-        const items = pvsA.map(p => ({ isP: true, isB: false, isEv: false, label: p.type, click: () => this.openModal({ t: 'pev', id: p.id }) })).concat(bd.map(m => ({ isB: true, isEv: false, label: 'Birthday — ' + m.name + ' (' + m.group + ')' }))).concat(evs.map(ev => {
+        const items = pvsA.map(p => ({ isP: true, isB: false, isEv: false, label: p.occasion || p.type, click: () => this.openModal({ t: 'pev', id: p.id }) })).concat(bd.map(m => ({ isB: true, isEv: false, label: 'Birthday — ' + m.name + ' (' + m.group + ')' }))).concat(evs.map(ev => {
           const a = this.attend(ev);
           const cancelled = ev.status === 'cancelled';
           const low = !cancelled && a.pct < TH;
