@@ -31,6 +31,8 @@ input::-webkit-date-and-time-value{text-align:left}
 [contenteditable="true"] h2{font-size:21px;margin:10px 0 5px;line-height:1.3}
 [contenteditable="true"] h3{font-size:17px;margin:9px 0 4px;line-height:1.3}
 [contenteditable="true"] p{margin:0 0 7px}
+[contenteditable="true"] table{border-collapse:collapse;width:100%;margin:10px 0}
+[contenteditable="true"] td{border:1px solid var(--bstrong);padding:6px 9px;min-width:48px;vertical-align:top}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -339,11 +341,11 @@ input::-webkit-date-and-time-value{text-align:left}
       <sc-for list="{{ legend }}" as="lg" hint-placeholder-count="6">
         <span style="display:inline-flex;align-items:center;gap:5px"><span style="{{ lg.dotStyle }}"></span>{{ lg.label }}</span>
       </sc-for>
-      <span style="color:var(--muted2);font-weight:700">Solid = Mass · Outlined = Rehearsal</span>
+      <span style="color:var(--muted2);font-weight:700">Solid = Mass · Outlined = Rehearsal · Grey = Parish-wide</span>
     </div>
     </sc-if>
     <sc-if value="{{ deskHint }}" hint-placeholder-val="{{ false }}">
-    <div style="font-size:11.5px;font-weight:800;color:var(--muted2)">Solid = Mass · Outlined = Rehearsal</div>
+    <div style="font-size:11.5px;font-weight:800;color:var(--muted2)">Solid = Mass · Outlined = Rehearsal · Grey text beside a date = parish-wide event</div>
     </sc-if>
 
     <sc-if value="{{ calGrid }}" hint-placeholder-val="{{ true }}">
@@ -354,12 +356,18 @@ input::-webkit-date-and-time-value{text-align:left}
       <div style="display:grid;grid-template-columns:repeat(7,1fr)">
         <sc-for list="{{ cells }}" as="c" hint-placeholder-count="35">
           <div onClick="{{ c.click }}" onDragOver="{{ c.dragOver }}" onDrop="{{ c.drop }}" style="{{ c.style }}">
-            <span style="{{ c.numStyle }}">{{ c.num }}</span>
+            <div style="display:flex;align-items:center;gap:5px;min-width:0">
+              <span style="{{ c.numStyle }}">{{ c.num }}</span>
+              <sc-if value="{{ c.hasParish }}" hint-placeholder-val="{{ false }}"><span onClick="{{ c.pvClick }}" title="{{ c.pvTitle }}" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;font-weight:700;font-style:italic;color:var(--muted2);cursor:pointer">{{ c.pvLabel }}</span></sc-if>
+            </div>
             <sc-for list="{{ c.bdays }}" as="bd" hint-placeholder-count="0">
               <div title="{{ bd.title }}" style="background:#fdb20b;color:#111111;border-radius:5px;padding:2px 5px;font-size:10px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ bd.label }}</div>
             </sc-for>
             <sc-for list="{{ c.events }}" as="ev" hint-placeholder-count="0">
-              <div onClick="{{ ev.click }}" title="{{ ev.title }}" style="{{ ev.style }}"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">{{ ev.left }}</span><span style="flex:none">{{ ev.right }}</span></div>
+              <div onClick="{{ ev.click }}" title="{{ ev.title }}" style="{{ ev.style }}">
+                <div style="display:flex;align-items:center;gap:4px;justify-content:space-between;min-width:0"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">{{ ev.left }}</span><span style="flex:none">{{ ev.right }}</span></div>
+                <sc-if value="{{ ev.hasInst }}" hint-placeholder-val="{{ false }}"><div style="font-size:9.5px;font-weight:700;opacity:0.92;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ ev.inst }}</div></sc-if>
+              </div>
             </sc-for>
           </div>
         </sc-for>
@@ -394,6 +402,9 @@ input::-webkit-date-and-time-value{text-align:left}
               <button onClick="{{ ad.add }}" title="Add schedule on this day" style="width:26px;height:26px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);color:var(--muted);font-size:15px;font-weight:800;cursor:pointer;line-height:1">+</button>
             </div>
             <sc-for list="{{ ad.items }}" as="it" hint-placeholder-count="1">
+              <sc-if value="{{ it.isP }}" hint-placeholder-val="{{ false }}">
+                <div onClick="{{ it.click }}" style="background:var(--soft);border:1px dashed var(--bstrong);color:var(--muted);border-radius:10px;padding:9px 12px;font-size:13.5px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:8px"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">{{ it.label }}</span><span style="font-size:10px;font-weight:800;letter-spacing:1px;color:var(--muted2);flex:none">PARISH</span></div>
+              </sc-if>
               <sc-if value="{{ it.isB }}" hint-placeholder-val="{{ false }}">
                 <div style="background:#fdb20b;color:#111111;border-radius:10px;padding:9px 12px;font-size:13.5px;font-weight:800">{{ it.label }}</div>
               </sc-if>
@@ -565,18 +576,30 @@ input::-webkit-date-and-time-value{text-align:left}
       </div>
 
       <div style="display:flex;flex-direction:column;gap:8px">
-        <div style="font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted2)">Agenda</div>
+        <button onClick="{{ mtAgToggle }}" style="border:none;background:none;cursor:pointer;padding:0;display:flex;align-items:center;gap:7px;color:var(--muted2);font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;align-self:flex-start"><span style="{{ mtAgChev }}">▸</span>Agenda ({{ mtAgCount }} · {{ mtAgSolvedCount }} solved)</button>
+        <sc-if value="{{ mtAgListOpen }}" hint-placeholder-val="{{ true }}">
         <sc-for list="{{ mtAgendas }}" as="ag" hint-placeholder-count="2">
-          <div style="display:flex;align-items:center;gap:9px;background:var(--soft);border-radius:9px;padding:8px 11px">
-            <span style="font-weight:800;color:var(--redink);font-size:13px;flex:none">{{ ag.num }}</span>
-            <div style="flex:1;font-size:13.5px;font-weight:700;min-width:0">{{ ag.text }}</div>
-            <button onClick="{{ ag.remove }}" title="Remove agenda item" style="border:none;background:none;color:var(--muted2);font-size:15px;font-weight:800;cursor:pointer;padding:0 4px;line-height:1" style-hover="color:var(--redink)">×</button>
+          <div style="background:var(--soft);border-radius:9px;padding:8px 11px;display:flex;flex-direction:column;gap:6px">
+            <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">
+              <span style="font-weight:800;color:var(--redink);font-size:13px;flex:none">{{ ag.num }}</span>
+              <div style="{{ ag.textStyle }}">{{ ag.text }}</div>
+              <sc-if value="{{ ag.solved }}" hint-placeholder-val="{{ false }}"><button onClick="{{ ag.expand }}" title="Show or hide the solution" style="border:none;background:none;color:var(--muted2);font-size:14px;font-weight:800;cursor:pointer;padding:0 3px;line-height:1;flex:none">{{ ag.chev }}</button></sc-if>
+              <button onClick="{{ ag.solve }}" style="{{ ag.solveStyle }}">{{ ag.solveLabel }}</button>
+              <button onClick="{{ ag.remove }}" title="Delete agenda item" style="{{ ag.delStyle }}" style-hover="color:var(--redink)">{{ ag.delLabel }}</button>
+            </div>
+            <sc-if value="{{ ag.showSol }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:8px;align-items:center;padding-left:22px">
+              <span style="font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#2e9e44;flex:none">Solution</span>
+              <input defaultValue="{{ ag.solution }}" onChange="{{ ag.onSol }}" placeholder="Write the solution / resolution…" style="flex:1;min-width:0;box-sizing:border-box;padding:8px 10px;border:1px solid var(--bstrong);border-radius:8px;font-size:13px;background:var(--card)">
+            </div>
+            </sc-if>
           </div>
         </sc-for>
         <div style="display:flex;gap:7px">
           <input ref="{{ mtAgRef }}" placeholder="Add an agenda item…" onKeyDown="{{ mtAgKey }}" style="flex:1;min-width:0;box-sizing:border-box;padding:9px 10px;min-height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:13.5px">
           <button onClick="{{ mtAddAg }}" style="padding:0 18px;min-height:44px;border:1.5px solid #bc0700;border-radius:999px;background:var(--card);color:var(--redink);font-size:12.5px;font-weight:800;cursor:pointer;white-space:nowrap">+ Add</button>
         </div>
+        </sc-if>
       </div>
 
       <div style="display:flex;flex-direction:column;gap:8px">
@@ -605,9 +628,28 @@ input::-webkit-date-and-time-value{text-align:left}
             <button onMouseDown="{{ tbPrevent }}" onClick="{{ tbFore }}" title="Text color" style="{{ tbBtn }}"><span style="font-weight:800;border-bottom:3px solid #bc0700;padding:0 1px">A</span></button>
             <button onMouseDown="{{ tbPrevent }}" onClick="{{ tbHi }}" title="Highlight" style="{{ tbBtn }}"><span style="font-weight:800;background:#fff3a3;color:#111111;padding:0 3px">A</span></button>
             <button onMouseDown="{{ tbPrevent }}" onClick="{{ tbClear }}" title="Clear formatting" style="{{ tbBtn }}">Clear</button>
+            <div style="width:1px;height:20px;background:var(--line);margin:0 3px"></div>
+            <button onMouseDown="{{ tbPrevent }}" onClick="{{ tbTable }}" title="Insert a table" style="{{ tbBtn }}">⊞ Table</button>
             <sc-if value="{{ palOpen }}" hint-placeholder-val="{{ false }}">
             <div style="position:absolute;top:calc(100% + 4px);left:9px;z-index:30;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px;display:flex;gap:6px;flex-wrap:wrap;box-shadow:0 10px 28px rgba(0,0,0,0.18);max-width:240px">
               <sc-for list="{{ palSwatches }}" as="sw" hint-placeholder-count="8"><button onMouseDown="{{ tbPrevent }}" onClick="{{ sw.click }}" title="{{ sw.title }}" style="{{ sw.style }}"></button></sc-for>
+            </div>
+            </sc-if>
+            <sc-if value="{{ tblOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;top:calc(100% + 4px);left:9px;z-index:30;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px;box-shadow:0 10px 28px rgba(0,0,0,0.18)">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:12px;font-weight:800;color:var(--muted);width:58px">Rows</span>
+                <button onMouseDown="{{ tbPrevent }}" onClick="{{ tblRminus }}" style="{{ tbBtn }}">−</button>
+                <span style="font-weight:800;font-size:14px;min-width:22px;text-align:center">{{ tblRows }}</span>
+                <button onMouseDown="{{ tbPrevent }}" onClick="{{ tblRplus }}" style="{{ tbBtn }}">+</button>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:12px;font-weight:800;color:var(--muted);width:58px">Columns</span>
+                <button onMouseDown="{{ tbPrevent }}" onClick="{{ tblCminus }}" style="{{ tbBtn }}">−</button>
+                <span style="font-weight:800;font-size:14px;min-width:22px;text-align:center">{{ tblCols }}</span>
+                <button onMouseDown="{{ tbPrevent }}" onClick="{{ tblCplus }}" style="{{ tbBtn }}">+</button>
+              </div>
+              <button onMouseDown="{{ tbPrevent }}" onClick="{{ tblInsert }}" style="padding:8px 14px;border:none;border-radius:999px;background:#bc0700;color:#ffffff;font-size:12.5px;font-weight:800;cursor:pointer">Insert table</button>
             </div>
             </sc-if>
           </div>
@@ -633,9 +675,21 @@ input::-webkit-date-and-time-value{text-align:left}
 <sc-if value="{{ mDay }}" hint-placeholder-val="{{ false }}">
 <div onClick="{{ closeModal }}" style="position:fixed;inset:0;background:rgba(17,17,17,0.55);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box">
   <div onClick="{{ stopProp }}" style="background:var(--card);border-radius:16px;width:min(480px,100%);max-height:86vh;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:12px;box-sizing:border-box">
-    <div style="font-weight:800;font-size:21px">{{ dayTitle }}</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <sc-if value="{{ canBack }}" hint-placeholder-val="{{ false }}"><button onClick="{{ goBack }}" title="Back to the previous window" style="width:34px;height:34px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);color:var(--muted);font-size:16px;font-weight:800;cursor:pointer;flex:none;line-height:1;padding:0">←</button></sc-if>
+      <div style="font-weight:800;font-size:21px">{{ dayTitle }}</div>
+    </div>
     <sc-for list="{{ dayBdays }}" as="b" hint-placeholder-count="0">
       <div style="background:#fdb20b;border-radius:9px;padding:8px 12px;font-size:13px;font-weight:800;color:#111111">Birthday — {{ b.label }}</div>
+    </sc-for>
+    <sc-for list="{{ dayParish }}" as="p" hint-placeholder-count="0">
+      <div onClick="{{ p.open }}" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px dashed var(--bstrong);border-radius:11px;cursor:pointer;color:var(--muted)" style-hover="border-color:var(--redink)">
+        <div style="min-width:0;flex:1">
+          <div style="font-weight:800;font-size:14px">{{ p.title }}</div>
+          <div style="font-size:12px;color:var(--muted2)">{{ p.sub }}</div>
+        </div>
+        <div style="font-size:10px;font-weight:800;letter-spacing:1px;color:var(--muted2);flex:none">PARISH-WIDE</div>
+      </div>
     </sc-for>
     <sc-for list="{{ dayEvents }}" as="d" hint-placeholder-count="1">
       <div onClick="{{ d.open }}" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:11px;cursor:pointer" style-hover="border-color:var(--redink)">
@@ -660,13 +714,17 @@ input::-webkit-date-and-time-value{text-align:left}
 <sc-if value="{{ mEvent }}" hint-placeholder-val="{{ false }}">
 <div onClick="{{ closeModal }}" style="position:fixed;inset:0;background:rgba(17,17,17,0.55);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box">
   <div onClick="{{ stopProp }}" style="background:var(--card);border-radius:16px;width:min(560px,100%);max-height:88vh;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:14px;box-sizing:border-box">
-    <div>
+    <div style="display:flex;align-items:flex-start;gap:10px">
+      <sc-if value="{{ canBack }}" hint-placeholder-val="{{ false }}"><button onClick="{{ goBack }}" title="Back to the previous window" style="width:34px;height:34px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);color:var(--muted);font-size:16px;font-weight:800;cursor:pointer;flex:none;line-height:1;padding:0">←</button></sc-if>
+      <div style="min-width:0;flex:1">
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <span style="{{ evChipStyle }}">{{ evGroupLabel }}</span>
         <div style="font-weight:800;font-size:22px">{{ evTitle }}</div>
       </div>
       <div style="font-size:13.5px;color:var(--muted);margin-top:3px">{{ evWhen }}</div>
       <sc-if value="{{ evHasOccasion }}" hint-placeholder-val="{{ false }}"><div style="font-size:13.5px;color:var(--text);font-weight:700;margin-top:2px">{{ evOccasion }}</div></sc-if>
+      <sc-if value="{{ evHasNotes }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:var(--muted);margin-top:4px;white-space:pre-wrap;line-height:1.5">{{ evNotes }}</div></sc-if>
+      </div>
     </div>
 
     <sc-if value="{{ evCancelled }}" hint-placeholder-val="{{ false }}">
@@ -704,8 +762,8 @@ input::-webkit-date-and-time-value{text-align:left}
           <sc-for list="{{ evAbsOptions }}" as="o" hint-placeholder-count="0"><option value="{{ o.name }}">{{ o.label }}</option></sc-for>
         </select>
         <div style="display:flex;gap:7px;flex-wrap:wrap">
-          <input ref="{{ absNameRef }}" placeholder="…or type a name" style="flex:1;min-width:120px;box-sizing:border-box;padding:9px 10px;border:1px solid var(--bstrong);border-radius:9px;font-size:13.5px">
-          <input ref="{{ absReasonRef }}" placeholder="Reason (optional)" style="flex:1;min-width:120px;box-sizing:border-box;padding:9px 10px;border:1px solid var(--bstrong);border-radius:9px;font-size:13.5px">
+          <input ref="{{ absNameRef }}" placeholder="…or type a name" onKeyDown="{{ absKey }}" style="flex:1;min-width:120px;box-sizing:border-box;padding:9px 10px;border:1px solid var(--bstrong);border-radius:9px;font-size:13.5px">
+          <input ref="{{ absReasonRef }}" placeholder="Reason (optional)" onKeyDown="{{ absKey }}" style="flex:1;min-width:120px;box-sizing:border-box;padding:9px 10px;border:1px solid var(--bstrong);border-radius:9px;font-size:13.5px">
           <button onClick="{{ addAbsence }}" style="padding:9px 15px;border:1.5px solid #bc0700;border-radius:999px;background:var(--card);color:var(--redink);font-size:12.5px;font-weight:800;cursor:pointer">Log absence</button>
         </div>
       </div>
@@ -734,15 +792,45 @@ input::-webkit-date-and-time-value{text-align:left}
 <sc-if value="{{ mEform }}" hint-placeholder-val="{{ false }}">
 <div onClick="{{ closeModal }}" style="position:fixed;inset:0;background:rgba(17,17,17,0.55);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box">
   <div onClick="{{ stopProp }}" style="background:var(--card);border-radius:16px;width:min(520px,100%);max-height:88vh;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:13px;box-sizing:border-box">
-    <div style="font-weight:800;font-size:22px">{{ eformTitle }}</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <sc-if value="{{ canBack }}" hint-placeholder-val="{{ false }}"><button onClick="{{ goBack }}" title="Back to the previous window" style="width:34px;height:34px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);color:var(--muted);font-size:16px;font-weight:800;cursor:pointer;flex:none;line-height:1;padding:0">←</button></sc-if>
+      <div style="font-weight:800;font-size:22px">{{ eformTitle }}</div>
+    </div>
+    <sc-if value="{{ efShowKind }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;gap:7px">
+      <div style="display:flex;gap:2px;background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:3px;align-self:flex-start;flex-wrap:wrap">
+        <button onClick="{{ efKindChoir }}" style="{{ efKindChoirStyle }}">Choir schedule</button>
+        <button onClick="{{ efKindParish }}" style="{{ efKindParishStyle }}">Whole parish</button>
+      </div>
+      <sc-if value="{{ efIsParish }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:var(--muted2);line-height:1.5">A parish-wide occasion (feast day, solemnity…) — no choir groups or attendance. It shows as grey text beside the date on the calendar.</div></sc-if>
+    </div>
+    </sc-if>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:11px">
       <div style="min-width:0"><div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Date</div><input name="date" type="date" defaultValue="{{ fDate }}" onChange="{{ onF }}" style="display:block;width:100%;min-width:0;max-width:100%;box-sizing:border-box;padding:9px 10px;height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:14px;background:var(--card);text-align:left"></div>
-      <div style="min-width:0"><div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Time</div><input name="time" type="time" defaultValue="{{ fTime }}" onChange="{{ onF }}" style="display:block;width:100%;min-width:0;max-width:100%;box-sizing:border-box;padding:9px 10px;height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:14px;background:var(--card);text-align:left"></div>
-      <div style="min-width:0"><div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Type</div><select name="type" defaultValue="{{ fType }}" onChange="{{ onF }}" style="width:100%;min-width:0;box-sizing:border-box;padding:9px 10px;min-height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:14px;background:var(--card)"><option value="mass">Mass</option><option value="rehearsal">Rehearsal</option></select></div>
-      <div style="min-width:0"><div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Choir group</div><select name="group" defaultValue="{{ fGroup }}" onChange="{{ onF }}" style="width:100%;min-width:0;box-sizing:border-box;padding:9px 10px;min-height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:14px;background:var(--card)"><option value="">Grand Choir</option><option value="CSA">CSA — Coro ni San Agustin</option><option value="SAC">SAC — St. Ambrose Choir</option><option value="SMC">SMC — Sta. Monica Choir</option><option value="HSR">HSR — Himig Sta. Rita</option><option value="SCC">SCC — San Cristobal Choir</option></select></div>
-      <div style="grid-column:1/-1"><div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Venue</div><input name="venue" defaultValue="{{ fVenue }}" onChange="{{ onF }}" placeholder="Leave blank to use the group's usual venue" style="width:100%;min-width:0;box-sizing:border-box;padding:9px 10px;min-height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:14px"></div>
-      <div style="grid-column:1/-1"><div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Occasion (optional)</div><input name="occasion" defaultValue="{{ fOccasion }}" onChange="{{ onF }}" placeholder="e.g. Feast of San Agustin, Anticipated Mass" style="width:100%;min-width:0;box-sizing:border-box;padding:9px 10px;min-height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:14px"></div>
-      <div style="min-width:0"><div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Expected attendees</div><input name="expected" type="number" min="1" defaultValue="{{ fExpected }}" onChange="{{ onF }}" style="width:100%;min-width:0;box-sizing:border-box;padding:9px 10px;min-height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:14px"></div>
+      <sc-if value="{{ efIsChoir }}" hint-placeholder-val="{{ true }}"><div style="min-width:0"><div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Time</div><input name="time" type="time" defaultValue="{{ fTime }}" onChange="{{ onF }}" style="display:block;width:100%;min-width:0;max-width:100%;box-sizing:border-box;padding:9px 10px;height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:14px;background:var(--card);text-align:left"></div></sc-if>
+      <div style="min-width:0"><div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Type</div><select defaultValue="{{ fTypeSel }}" onChange="{{ onFType }}" style="width:100%;min-width:0;box-sizing:border-box;padding:9px 10px;min-height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:14px;background:var(--card)"><sc-for list="{{ typeOptions }}" as="o" hint-placeholder-count="3"><option value="{{ o.val }}">{{ o.label }}</option></sc-for></select><sc-if value="{{ efNewType }}" hint-placeholder-val="{{ false }}"><input name="typeNew" onChange="{{ onF }}" placeholder="Name the new type (e.g. Recollection)" style="width:100%;min-width:0;box-sizing:border-box;padding:9px 10px;min-height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:14px;margin-top:6px"></sc-if></div>
+      <sc-if value="{{ efIsChoir }}" hint-placeholder-val="{{ true }}"><div style="min-width:0"><div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Expected attendees</div><input name="expected" type="number" min="1" defaultValue="{{ fExpected }}" onChange="{{ onF }}" style="width:100%;min-width:0;box-sizing:border-box;padding:9px 10px;min-height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:14px"></div></sc-if>
+      <sc-if value="{{ efIsChoir }}" hint-placeholder-val="{{ true }}">
+      <div style="grid-column:1/-1">
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Choir groups <span style="font-weight:700;text-transform:none;letter-spacing:0">(tap to pick one or more)</span></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <sc-for list="{{ fGroupPills }}" as="gp" hint-placeholder-count="6"><button onClick="{{ gp.click }}" title="{{ gp.name }}" style="{{ gp.style }}">{{ gp.label }}</button></sc-for>
+        </div>
+        <div style="font-size:11.5px;color:var(--muted2);margin-top:5px">{{ fGroupsHint }}</div>
+      </div>
+      </sc-if>
+      <div style="grid-column:1/-1"><div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Venue</div><select defaultValue="{{ fVenueSel }}" onChange="{{ onFVenue }}" style="width:100%;min-width:0;box-sizing:border-box;padding:9px 10px;min-height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:14px;background:var(--card)"><sc-for list="{{ venueOptions }}" as="o" hint-placeholder-count="4"><option value="{{ o.val }}">{{ o.label }}</option></sc-for></select><sc-if value="{{ efNewVenue }}" hint-placeholder-val="{{ false }}"><input name="venueNew" onChange="{{ onF }}" placeholder="Name the new venue" style="width:100%;min-width:0;box-sizing:border-box;padding:9px 10px;min-height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:14px;margin-top:6px"></sc-if></div>
+      <div style="grid-column:1/-1"><div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">{{ occasionLabel }}</div><input name="occasion" defaultValue="{{ fOccasion }}" onChange="{{ onF }}" placeholder="e.g. Feast of San Agustin, Anticipated Mass" style="width:100%;min-width:0;box-sizing:border-box;padding:9px 10px;min-height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:14px"></div>
+      <sc-if value="{{ efIsChoir }}" hint-placeholder-val="{{ true }}">
+      <div style="grid-column:1/-1">
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Instrumentalists <span style="font-weight:700;text-transform:none;letter-spacing:0">(optional)</span></div>
+        <sc-if value="{{ efNoInstOptions }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:var(--muted2)">No members are tagged as instrumentalists yet. Tag them in the Members page first.</div></sc-if>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <sc-for list="{{ efInstPills }}" as="ip" hint-placeholder-count="0"><button onClick="{{ ip.click }}" style="{{ ip.style }}">{{ ip.label }}</button></sc-for>
+        </div>
+      </div>
+      </sc-if>
+      <div style="grid-column:1/-1"><div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Notes <span style="font-weight:700;text-transform:none;letter-spacing:0">(optional)</span></div><textarea name="notes" defaultValue="{{ fNotes }}" onChange="{{ onF }}" placeholder="Anything else to remember — song list, reminders…" style="width:100%;min-width:0;box-sizing:border-box;padding:9px 10px;min-height:64px;border:1px solid var(--bstrong);border-radius:9px;font-size:14px;font-family:inherit;resize:vertical"></textarea></div>
     </div>
     <sc-if value="{{ formError }}" hint-placeholder-val="{{ false }}"><div style="color:var(--redink);font-size:13px;font-weight:700">{{ formErrorMsg }}</div></sc-if>
     <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
@@ -750,6 +838,18 @@ input::-webkit-date-and-time-value{text-align:left}
       <button onClick="{{ saveEform }}" style="min-height:44px;padding:0 22px;border:none;border-radius:999px;background:#bc0700;color:#ffffff;font-size:13px;font-weight:800;cursor:pointer">Save schedule</button>
     </div>
   </div>
+  <sc-if value="{{ exitConfirmOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ keepEditing }}" style="position:fixed;inset:0;background:rgba(17,17,17,0.45);z-index:130;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
+    <div onClick="{{ stopProp }}" style="background:var(--card);border-radius:14px;padding:18px;width:min(340px,100%);display:flex;flex-direction:column;gap:12px;box-sizing:border-box;box-shadow:0 18px 50px rgba(0,0,0,0.3)">
+      <div style="font-weight:800;font-size:17px">Changes not saved</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.5">You have unsaved changes on this form. Leave without saving?</div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+        <button onClick="{{ discardExit }}" style="min-height:40px;padding:0 15px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);color:var(--redink);font-size:12.5px;font-weight:800;cursor:pointer">Discard changes</button>
+        <button onClick="{{ keepEditing }}" style="min-height:40px;padding:0 18px;border:none;border-radius:999px;background:#bc0700;color:#ffffff;font-size:12.5px;font-weight:800;cursor:pointer">Keep editing</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
 </div>
 </sc-if>
 
@@ -799,6 +899,18 @@ input::-webkit-date-and-time-value{text-align:left}
       <button onClick="{{ saveMform }}" style="padding:9px 20px;border:none;border-radius:999px;background:#bc0700;color:#ffffff;font-size:13px;font-weight:800;cursor:pointer">Save member</button>
     </div>
   </div>
+  <sc-if value="{{ exitConfirmOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ keepEditing }}" style="position:fixed;inset:0;background:rgba(17,17,17,0.45);z-index:130;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
+    <div onClick="{{ stopProp }}" style="background:var(--card);border-radius:14px;padding:18px;width:min(340px,100%);display:flex;flex-direction:column;gap:12px;box-sizing:border-box;box-shadow:0 18px 50px rgba(0,0,0,0.3)">
+      <div style="font-weight:800;font-size:17px">Changes not saved</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.5">You have unsaved changes on this form. Leave without saving?</div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+        <button onClick="{{ discardExit }}" style="min-height:40px;padding:0 15px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);color:var(--redink);font-size:12.5px;font-weight:800;cursor:pointer">Discard changes</button>
+        <button onClick="{{ keepEditing }}" style="min-height:40px;padding:0 18px;border:none;border-radius:999px;background:#bc0700;color:#ffffff;font-size:12.5px;font-weight:800;cursor:pointer">Keep editing</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
 </div>
 </sc-if>
 
@@ -847,10 +959,36 @@ input::-webkit-date-and-time-value{text-align:left}
 </div>
 </sc-if>
 
+<sc-if value="{{ mPev }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ closeModal }}" style="position:fixed;inset:0;background:rgba(17,17,17,0.55);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box">
+  <div onClick="{{ stopProp }}" style="background:var(--card);border-radius:16px;width:min(460px,100%);max-height:86vh;overflow-y:auto;overflow-x:hidden;padding:20px;display:flex;flex-direction:column;gap:13px;box-sizing:border-box">
+    <div style="display:flex;align-items:flex-start;gap:10px">
+      <sc-if value="{{ canBack }}" hint-placeholder-val="{{ false }}"><button onClick="{{ goBack }}" title="Back to the previous window" style="width:34px;height:34px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);color:var(--muted);font-size:16px;font-weight:800;cursor:pointer;flex:none;line-height:1;padding:0">←</button></sc-if>
+      <div style="min-width:0;flex:1">
+        <div style="font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted2)">Parish-wide · {{ pvType }}</div>
+        <div style="font-weight:800;font-size:21px;line-height:1.25;margin-top:2px">{{ pvOccasion }}</div>
+        <div style="font-size:13.5px;color:var(--muted);margin-top:3px">{{ pvWhen }}</div>
+      </div>
+    </div>
+    <div style="background:var(--soft);border:1px dashed var(--bstrong);border-radius:11px;padding:10px 13px;font-size:12.5px;color:var(--muted2);line-height:1.5">Whole-parish event — no choir groups or attendance tracking. Only the type shows on the calendar; open this window for the full details.</div>
+    <sc-if value="{{ pvHasNotes }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:var(--muted);white-space:pre-wrap;line-height:1.5">{{ pvNotes }}</div></sc-if>
+    <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;min-width:0">
+      <button onClick="{{ pvDelete }}" style="padding:9px 15px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);color:var(--redink);font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap">{{ pvDeleteLabel }}</button>
+      <div style="flex:1;min-width:0"></div>
+      <button onClick="{{ pvEdit }}" style="padding:9px 16px;border:1.5px solid #bc0700;border-radius:999px;background:var(--card);color:var(--redink);font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap">Edit details</button>
+      <button onClick="{{ closeModal }}" style="padding:9px 18px;border:none;border-radius:999px;background:#111111;color:#ffffff;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap">Close</button>
+    </div>
+  </div>
+</div>
+</sc-if>
+
 <sc-if value="{{ mPin }}" hint-placeholder-val="{{ false }}">
 <div onClick="{{ closeModal }}" style="position:fixed;inset:0;background:rgba(17,17,17,0.55);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box">
   <div onClick="{{ stopProp }}" style="background:var(--card);border-radius:16px;width:min(380px,100%);padding:20px;display:flex;flex-direction:column;gap:12px;box-sizing:border-box">
-    <div style="font-weight:800;font-size:21px">Change PIN</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <sc-if value="{{ canBack }}" hint-placeholder-val="{{ false }}"><button onClick="{{ goBack }}" title="Back to the previous window" style="width:34px;height:34px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);color:var(--muted);font-size:16px;font-weight:800;cursor:pointer;flex:none;line-height:1;padding:0">←</button></sc-if>
+      <div style="font-weight:800;font-size:21px">Change PIN</div>
+    </div>
     <div style="font-size:12.5px;color:var(--muted)">The PIN is shared by all admins and coordinators. When cloud sync is on, changing it here changes it for everyone.</div>
     <input ref="{{ pinCurRef }}" type="password" placeholder="Current PIN" style="width:100%;box-sizing:border-box;padding:10px 11px;border:1px solid var(--bstrong);border-radius:9px;font-size:15px">
     <input ref="{{ pinNewRef }}" type="password" placeholder="New PIN (at least 4 characters)" style="width:100%;box-sizing:border-box;padding:10px 11px;border:1px solid var(--bstrong);border-radius:9px;font-size:15px">
@@ -871,8 +1009,7 @@ class Component extends DCLogic {
     let store = null;
     try { store = JSON.parse(localStorage.getItem('plmm-data-v1')); } catch (e) {}
     if (!store || !Array.isArray(store.members)) store = this.seed();
-    if (!store.settings) store.settings = { pin: '1234' };
-    if (!Array.isArray(store.meetings)) store.meetings = [];
+    store = this.migrate(store);
     let unlocked = false;
     try { unlocked = sessionStorage.getItem('plmm-unlocked') === '1'; } catch (e) {}
     let theme = 'light';
@@ -880,7 +1017,7 @@ class Component extends DCLogic {
     let ws0 = 0;
     try { ws0 = Number(localStorage.getItem('plmm-weekstart')) || 0; } catch (e) {}
     const t = new Date();
-    return { store, unlocked, theme, isMobile: (typeof window !== 'undefined' && window.innerWidth < 760), selDay: this.ds(t), page: 'dash', vy: t.getFullYear(), vm: t.getMonth(), checks: { CSA: true, SAC: true, SMC: true, HSR: true, SCC: true, GC: true }, calView: 'month', showLegend: true, menuOpen: false, weekStartDow: ws0, miniVm: t.getMonth(), miniVy: t.getFullYear(), pickerOpen: false, mvoice: 'ALL', minst: false, msort: 'az', filter: 'ALL', mfilter: 'ALL', q: '', shot: false, modal: null, pinError: false, formError: '', confirm: false, sync: 'local', meetOpen: null, pal: null };
+    return { store, unlocked, theme, isMobile: (typeof window !== 'undefined' && window.innerWidth < 760), selDay: this.ds(t), page: 'dash', vy: t.getFullYear(), vm: t.getMonth(), checks: { CSA: true, SAC: true, SMC: true, HSR: true, SCC: true, GC: true }, calView: 'month', showLegend: true, menuOpen: false, weekStartDow: ws0, miniVm: t.getMonth(), miniVy: t.getFullYear(), pickerOpen: false, mvoice: 'ALL', minst: false, msort: 'az', filter: 'ALL', mfilter: 'ALL', q: '', shot: false, modal: null, mstack: [], exitConfirm: null, efNewType: false, efNewVenue: false, pinError: false, formError: '', confirm: false, sync: 'local', meetOpen: null, pal: null, tbl: null, agListClosed: false, agClosed: {}, agDel: null };
   }
 
   GROUPS() {
@@ -896,6 +1033,30 @@ class Component extends DCLogic {
   gColor(code) { const g = this.G(code); return g ? g.color : '#6d3fae'; }
   gLabel(code) { return code || 'GC'; }
   gName(code) { const g = this.G(code); return g ? g.name : 'Grand Choir'; }
+  migrate(store) {
+    if (!store.settings) store.settings = { pin: '1234' };
+    if (!Array.isArray(store.meetings)) store.meetings = [];
+    if (!Array.isArray(store.parish)) store.parish = [];
+    if (!Array.isArray(store.settings.types)) store.settings.types = ['Mass', 'Rehearsal'];
+    if (!Array.isArray(store.settings.venues)) store.settings.venues = ['Parish', 'Sta. Monica Hall', 'St. Ambrose Chapel', 'San Cristobal Chapel'];
+    (store.events || []).forEach(e => {
+      if (!Array.isArray(e.groups)) e.groups = e.group ? [e.group] : [];
+      if (e.type === 'mass') e.type = 'Mass';
+      if (e.type === 'rehearsal') e.type = 'Rehearsal';
+      if (e.type && !store.settings.types.some(t => t.toLowerCase() === e.type.toLowerCase())) store.settings.types.push(e.type);
+    });
+    (store.parish || []).forEach(p => {
+      if (p.type && !store.settings.types.some(t => t.toLowerCase() === p.type.toLowerCase())) store.settings.types.push(p.type);
+    });
+    (store.meetings || []).forEach(m => {
+      m.agendas = (m.agendas || []).map(a => (typeof a === 'string') ? { text: a, solved: false, solution: '' } : a);
+    });
+    return store;
+  }
+  isReh(ev) { return (ev.type || '').toLowerCase() === 'rehearsal'; }
+  gCodesOf(ev) { return (ev.groups && ev.groups.length) ? ev.groups : []; }
+  gLabelOf(ev) { const c = this.gCodesOf(ev); return c.length ? c.join('+') : 'GC'; }
+  gColorOf(ev) { const c = this.gCodesOf(ev); return c.length ? this.gColor(c[0]) : '#6d3fae'; }
 
   seed() {
     const mk = (date, time, group, venue, expected) => ({ id: 'e' + date + time.replace(':', ''), date, time, type: 'mass', group, venue, occasion: '', expected, absences: [], insts: [], status: 'active' });
@@ -925,6 +1086,15 @@ class Component extends DCLogic {
     try { document.body.classList.toggle('dark', this.state.theme === 'dark'); } catch (e) {}
     this._onRes = () => { const m = window.innerWidth < 760; if (m !== this.state.isMobile) this.setState({ isMobile: m }); };
     window.addEventListener('resize', this._onRes);
+    this._onKey = e => {
+      if (e.key !== 'Enter') return;
+      const M = this.state.modal;
+      if (!M || this.state.exitConfirm) return;
+      const tag = ((e.target && e.target.tagName) || '').toUpperCase();
+      if (tag === 'TEXTAREA' || (e.target && e.target.isContentEditable)) return;
+      if ((M.t === 'eform' || M.t === 'mform' || M.t === 'pin') && this._saveCurrent) { e.preventDefault(); this._saveCurrent(); }
+    };
+    window.addEventListener('keydown', this._onKey);
     this.initCloud();
   }
 
@@ -939,7 +1109,7 @@ class Component extends DCLogic {
         if (snap.exists) {
           const data = snap.data();
           if (data && Array.isArray(data.members)) {
-            this.setState({ store: data, sync: 'cloud' });
+            this.setState({ store: this.migrate(data), sync: 'cloud' });
             try { localStorage.setItem('plmm-data-v1', JSON.stringify(data)); } catch (e) {}
           }
         } else {
@@ -1030,12 +1200,32 @@ class Component extends DCLogic {
   }
   dot(color, onDark) { return { width: '8px', height: '8px', borderRadius: '50%', background: onDark ? '#ffffff' : color, display: 'inline-block', flex: 'none' }; }
 
-  openModal(modal) { this.setState({ modal, formError: '', confirm: false, bdPick: null, bdErr: false, thDraft: null }); }
-  openEform(ev, date, group) {
+  openModal(modal) { this._dirty = false; this.setState({ modal, mstack: [], exitConfirm: null, efNewType: false, efNewVenue: false, formError: '', confirm: false, bdPick: null, bdErr: false, thDraft: null }); }
+  pushModal(modal) { const st = (this.state.mstack || []).concat(this.state.modal ? [this.state.modal] : []); this._dirty = false; this.setState({ modal, mstack: st, exitConfirm: null, efNewType: false, efNewVenue: false, formError: '', confirm: false, bdPick: null, bdErr: false, thDraft: null }); }
+  tryClose(mode) {
+    const M = this.state.modal;
+    if (M && (M.t === 'eform' || M.t === 'mform') && this._dirty) { this.setState({ exitConfirm: mode }); return; }
+    this.doExit(mode);
+  }
+  doExit(mode) {
+    this._dirty = false;
+    const reset = { exitConfirm: null, efNewType: false, efNewVenue: false, formError: '', confirm: false, bdPick: null, bdErr: false, thDraft: null };
+    if (mode === 'back') { const st = (this.state.mstack || []).slice(); const prev = st.pop() || null; this.setState(Object.assign({ modal: prev, mstack: st }, reset)); }
+    else this.setState(Object.assign({ modal: null, mstack: [] }, reset));
+  }
+  openEform(ev, date, groups, push) {
     this.form = ev
-      ? { date: ev.date, time: ev.time, type: ev.type, group: ev.group, venue: ev.venue, occasion: ev.occasion, expected: ev.expected }
-      : { date: date || this.ds(new Date()), time: '07:00', type: 'mass', group: group || '', venue: '', occasion: '', expected: this.defExpected() };
-    this.openModal({ t: 'eform', id: ev ? ev.id : null });
+      ? { kind: 'choir', date: ev.date, time: ev.time, type: ev.type, groups: (ev.groups || []).slice(), venue: ev.venue, occasion: ev.occasion, expected: ev.expected, notes: ev.notes || '', insts: (ev.insts || []).slice() }
+      : { kind: 'choir', date: date || this.ds(new Date()), time: '07:00', type: 'Mass', groups: (groups || []).slice(), venue: 'Parish', occasion: '', expected: this.defExpected(), notes: '', insts: [] };
+    const m = { t: 'eform', id: ev ? ev.id : null };
+    if (push) this.pushModal(m); else this.openModal(m);
+  }
+  openPform(pv, push) {
+    this.form = pv
+      ? { kind: 'parish', date: pv.date, type: pv.type, venue: pv.venue, occasion: pv.occasion, notes: pv.notes || '' }
+      : { kind: 'parish', date: this.ds(new Date()), type: 'Mass', venue: 'Parish', occasion: '', notes: '' };
+    const m = { t: 'eform', id: null, pid: pv ? pv.id : null };
+    if (push) this.pushModal(m); else this.openModal(m);
   }
   openMform(m) {
     this.form = m
@@ -1066,9 +1256,9 @@ class Component extends DCLogic {
       id: ev.id,
       dow: this.DOWS()[d.getDay()].slice(0, 3).toUpperCase(),
       dayNum: String(d.getDate()),
-      groupLabel: this.gLabel(ev.group),
-      chipStyle: this.chip(this.gColor(ev.group)),
-      title: (ev.type === 'rehearsal' ? 'Rehearsal' : 'Mass') + (ev.occasion ? ' · ' + ev.occasion : ''),
+      groupLabel: this.gLabelOf(ev),
+      chipStyle: this.chip(this.gColorOf(ev)),
+      title: (ev.type || 'Mass') + (ev.occasion ? ' · ' + ev.occasion : ''),
       sub: this.t12p(ev.time) + ' · ' + ev.venue,
       att: cancelled ? 'Cancelled' : a.att + '/' + a.exp,
       attSub: cancelled ? '' : a.pct + '% attending',
@@ -1089,6 +1279,7 @@ class Component extends DCLogic {
     const TH = this.threshold();
     
 
+    this._saveCurrent = null;
     const v = {
       locked, appVisible: !locked, notShot: !S.shot, shot: S.shot, threshold: TH,
       isDash: S.page === 'dash', isCal: S.page === 'cal', isMembers: S.page === 'mem', isMtg: S.page === 'mtg',
@@ -1097,7 +1288,12 @@ class Component extends DCLogic {
       goCal: () => this.setState({ page: 'cal' }),
       goMem: () => this.setState({ page: 'mem' }),
       stopProp: e => e.stopPropagation(),
-      closeModal: () => this.setState({ modal: null, formError: '', confirm: false, bdPick: null, bdErr: false, thDraft: null }),
+      closeModal: () => this.tryClose('close'),
+      goBack: () => this.tryClose('back'),
+      canBack: (S.mstack || []).length > 0,
+      exitConfirmOpen: !!S.exitConfirm,
+      keepEditing: e => { if (e && e.stopPropagation) e.stopPropagation(); this.setState({ exitConfirm: null }); },
+      discardExit: e => { if (e && e.stopPropagation) e.stopPropagation(); this.doExit(S.exitConfirm || 'close'); },
       pinError: S.pinError,
       pinIsDefault: (store.settings.pin || '1234') === '1234',
       pinRef: el => { this._pin = el; },
@@ -1109,10 +1305,10 @@ class Component extends DCLogic {
           this.setState({ unlocked: true, pinError: false });
         } else this.setState({ pinError: true });
       },
-      openPin: () => this.openModal({ t: 'pin' }),
+      openPin: () => this.pushModal({ t: 'pin' }),
       openSettings: () => this.openModal({ t: 'settings' }),
       todayLong: this.longDate(todayStr),
-      onF: e => { const t = e.target; this.form = this.form || {}; this.form[t.name] = t.type === 'checkbox' ? t.checked : t.value; },
+      onF: e => { const t = e.target; this._dirty = true; this.form = this.form || {}; this.form[t.name] = t.type === 'checkbox' ? t.checked : t.value; },
       formError: !!S.formError, formErrorMsg: S.formError
     };
 
@@ -1290,7 +1486,7 @@ class Component extends DCLogic {
     v.deskHint = !S.isMobile;
     v.toggleLegend = () => this.setState({ showLegend: !(S.showLegend !== false) });
 
-    const matchG = e => !!CK[e.group || 'GC'];
+    const matchG = e => { const c = (e.groups && e.groups.length) ? e.groups : ['GC']; return c.some(x => !!CK[x]); };
     const first = new Date(S.vy, S.vm, 1);
     const lead0 = (first.getDay() - WS + 7) % 7;
     const start = new Date(S.vy, S.vm, 1 - lead0);
@@ -1304,32 +1500,40 @@ class Component extends DCLogic {
       const isToday = dstr === todayStr;
       const cellEvents = events.filter(e => e.date === dstr && matchG(e)).sort((a, b) => a.time.localeCompare(b.time));
       const cellBdays = store.members.filter(m => m.bMonth === d.getMonth() + 1 && m.bDay === d.getDate());
+      const cellPvs = (store.parish || []).filter(p => p.date === dstr);
       v.cells.push({
         num: String(d.getDate()),
+        hasParish: cellPvs.length > 0,
+        pvLabel: cellPvs.map(p => p.type).join(' · '),
+        pvTitle: cellPvs.map(p => (p.occasion ? p.occasion + ' (' + p.type + ')' : p.type)).join(' · ') + ' — parish-wide · click for details',
+        pvClick: e => { e.stopPropagation(); if (cellPvs.length === 1) this.openModal({ t: 'pev', id: cellPvs[0].id }); else this.openModal({ t: 'day', date: dstr }); },
         style: { minHeight: 'clamp(74px,12vw,116px)', padding: '5px', borderRight: '1px solid var(--line2)', borderBottom: '1px solid var(--line2)', display: 'flex', flexDirection: 'column', gap: '3px', cursor: 'pointer', background: isToday ? 'var(--todaybg)' : isCur ? 'var(--card)' : 'var(--dim)', boxSizing: 'border-box', minWidth: 0 },
         numStyle: isToday
           ? { display: 'inline-flex', width: '22px', height: '22px', borderRadius: '50%', background: '#bc0700', color: '#ffffff', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 800, flex: 'none' }
           : { fontSize: '12px', fontWeight: 700, color: isCur ? 'var(--text)' : 'var(--faint)', padding: '2px' },
         click: () => this.openModal({ t: 'day', date: dstr }),
         dragOver: e => e.preventDefault(),
-        drop: e => { e.preventDefault(); const g0 = this._dragGroup || ''; this.openEform(null, dstr, g0 === 'GC' ? '' : g0); this._dragGroup = null; },
+        drop: e => { e.preventDefault(); const g0 = this._dragGroup || ''; this.openEform(null, dstr, (g0 === 'GC' || !g0) ? [] : [g0]); this._dragGroup = null; },
         bdays: cellBdays.map(m => ({ label: '♪ ' + m.name, title: m.name + "'s birthday" })),
         events: cellEvents.map(ev => {
           const cancelled = ev.status === 'cancelled';
-          const col = this.gColor(ev.group);
-          const reh = ev.type === 'rehearsal';
+          const col = this.gColorOf(ev);
+          const reh = this.isReh(ev);
           const aa = this.attend(ev);
           const lw = !cancelled && aa.pct < TH;
-          const base = { borderRadius: '6px', padding: '2px 5px', fontSize: '10.5px', fontWeight: 800, whiteSpace: 'nowrap', cursor: 'pointer', boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'space-between' };
+          const instNames = (ev.insts || []).map(id => { const mm = store.members.find(x => x.id === id); return mm ? mm.name : null; }).filter(Boolean);
+          const base = { borderRadius: '6px', padding: '2px 5px', fontSize: '10.5px', fontWeight: 800, whiteSpace: 'nowrap', cursor: 'pointer', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '1px', minWidth: 0 };
           const style = cancelled
             ? Object.assign(base, { background: 'var(--line2)', color: 'var(--muted2)', textDecoration: 'line-through' })
             : reh
               ? Object.assign(base, { background: 'var(--card)', border: '1.5px solid ' + col, color: col })
               : Object.assign(base, { background: col, color: '#ffffff' });
           return {
-            left: this.t12p(ev.time) + ' | ' + this.gLabel(ev.group),
+            left: this.t12p(ev.time) + ' | ' + this.gLabelOf(ev),
             right: (lw ? '\u26A0 ' : '') + aa.att + '/' + aa.exp,
-            title: (reh ? 'Rehearsal' : 'Mass') + ' · ' + this.t12(ev.time) + ' · ' + ev.venue + ' · ' + aa.att + '/' + aa.exp + ' attending' + (lw ? ' (LOW ATTENDANCE)' : '') + (cancelled ? ' (CANCELLED)' : ''),
+            hasInst: instNames.length > 0,
+            inst: '\u266A ' + instNames.join(', '),
+            title: (ev.type || 'Mass') + ' · ' + this.t12(ev.time) + ' · ' + ev.venue + ' · ' + aa.att + '/' + aa.exp + ' attending' + (instNames.length ? ' · \u266A ' + instNames.join(', ') : '') + (lw ? ' (LOW ATTENDANCE)' : '') + (cancelled ? ' (CANCELLED)' : ''),
             style,
             click: e => { e.stopPropagation(); this.openModal({ t: 'event', id: ev.id }); }
           };
@@ -1347,27 +1551,28 @@ class Component extends DCLogic {
         v.weekHead.push({ label: this.DOWS()[d.getDay()].slice(0, 3).toUpperCase() + ' ' + d.getDate(), style: { padding: '9px 4px', textAlign: 'center', fontSize: '11px', fontWeight: 800, letterSpacing: '0.8px', color: isToday ? 'var(--redink)' : 'var(--muted2)' } });
         const evs = events.filter(e => e.date === dstr && matchG(e)).sort((a, b) => a.time.localeCompare(b.time));
         const bds = store.members.filter(m => m.bMonth === d.getMonth() + 1 && m.bDay === d.getDate());
+        const pvsW = (store.parish || []).filter(p => p.date === dstr);
         v.weekCells.push({
           click: () => this.openModal({ t: 'day', date: dstr }),
           dragOver: e => e.preventDefault(),
-          drop: e => { e.preventDefault(); const g0 = this._dragGroup || ''; this.openEform(null, dstr, g0 === 'GC' ? '' : g0); this._dragGroup = null; },
+          drop: e => { e.preventDefault(); const g0 = this._dragGroup || ''; this.openEform(null, dstr, (g0 === 'GC' || !g0) ? [] : [g0]); this._dragGroup = null; },
           style: { minHeight: '260px', padding: '6px', borderRight: '1px solid var(--line2)', display: 'flex', flexDirection: 'column', gap: '5px', cursor: 'pointer', background: isToday ? 'var(--todaybg)' : 'var(--card)', boxSizing: 'border-box', minWidth: 0 },
           bdays: bds.map(m => ({ label: '♪ ' + m.name })),
-          events: evs.map(ev => {
+          events: pvsW.map(p => ({ l1: p.type, l2: 'Parish-wide', title: (p.occasion || p.type) + ' · ' + p.venue + ' — parish-wide event', style: { borderRadius: '8px', padding: '5px 7px', cursor: 'pointer', overflow: 'hidden', background: 'var(--line2)', color: 'var(--muted)', fontStyle: 'italic' }, click: e => { e.stopPropagation(); this.openModal({ t: 'pev', id: p.id }); } })).concat(evs.map(ev => {
             const a = this.attend(ev);
             const cancelled = ev.status === 'cancelled';
             const low = !cancelled && a.pct < TH;
-            const reh = ev.type === 'rehearsal';
-            const col = this.gColor(ev.group);
+            const reh = this.isReh(ev);
+            const col = this.gColorOf(ev);
             const base = { borderRadius: '8px', padding: '5px 7px', cursor: 'pointer', overflow: 'hidden' };
             return {
-              l1: this.t12p(ev.time) + ' | ' + this.gLabel(ev.group),
+              l1: this.t12p(ev.time) + ' | ' + this.gLabelOf(ev),
               l2: cancelled ? 'Cancelled' : a.att + '/' + a.exp + (low ? ' · \u26A0 LOW' : ''),
-              title: (reh ? 'Rehearsal' : 'Mass') + ' · ' + this.t12(ev.time) + ' · ' + ev.venue,
+              title: (ev.type || 'Mass') + ' · ' + this.t12(ev.time) + ' · ' + ev.venue,
               style: cancelled ? Object.assign(base, { background: 'var(--line2)', color: 'var(--muted2)', textDecoration: 'line-through' }) : reh ? Object.assign(base, { background: 'var(--card)', border: '1.5px solid ' + col, color: col }) : Object.assign(base, { background: col, color: '#ffffff' }),
               click: e => { e.stopPropagation(); this.openModal({ t: 'event', id: ev.id }); }
             };
-          })
+          }))
         });
       }
     }
@@ -1384,16 +1589,18 @@ class Component extends DCLogic {
           const dstr = this.ds(new Date(S.vy, m, day));
           const evs = events.filter(e => e.date === dstr && matchG(e));
           const hasB = store.members.some(mm => mm.bMonth === m + 1 && mm.bDay === day);
+          const pvsY = (store.parish || []).filter(p => p.date === dstr);
           const isToday = dstr === todayStr;
           let st = { fontSize: '10.5px', textAlign: 'center', padding: '3px 0', borderRadius: '5px', cursor: 'pointer', color: 'var(--muted)', fontWeight: 600 };
-          if (evs.length) { const cols = evs.map(e => this.gColor(e.group)).filter((c, i, arr) => arr.indexOf(c) === i); st = Object.assign(st, { background: cols.length === 1 ? cols[0] : '#bc0700', color: '#ffffff', fontWeight: 800 }); }
+          if (evs.length) { const cols = evs.map(e => this.gColorOf(e)).filter((c, i, arr) => arr.indexOf(c) === i); st = Object.assign(st, { background: cols.length === 1 ? cols[0] : '#bc0700', color: '#ffffff', fontWeight: 800 }); }
+          else if (pvsY.length) st = Object.assign(st, { background: 'var(--line2)', color: 'var(--muted)', fontWeight: 800 });
           else if (hasB) st = Object.assign(st, { background: '#fdb20b', color: '#111111', fontWeight: 800 });
           if (isToday) st.boxShadow = '0 0 0 2px var(--redink) inset';
           days.push({
             num: String(day),
             style: st,
-            title: evs.length ? evs.length + ' schedule(s) — click to open' : hasB ? 'Birthday' : '',
-            click: () => { this.setState({ calView: 'month', vm: m, selDay: dstr }); if (evs.length || hasB) this.openModal({ t: 'day', date: dstr }); }
+            title: evs.length ? evs.length + ' schedule(s) — click to open' : pvsY.length ? pvsY.map(p => p.type).join(' · ') + ' — parish-wide' : hasB ? 'Birthday' : '',
+            click: () => { this.setState({ calView: 'month', vm: m, selDay: dstr }); if (evs.length || hasB || pvsY.length) this.openModal({ t: 'day', date: dstr }); }
           });
         }
         const m0 = m;
@@ -1417,6 +1624,7 @@ class Component extends DCLogic {
         const evs = events.filter(e => e.date === dstr && matchG(e));
         const dots = evs.slice(0, 4).map(e => ({ style: { width: '5px', height: '5px', borderRadius: '50%', background: e.status === 'cancelled' ? 'var(--faint)' : this.gColor(e.group), flex: 'none' } }));
         if (store.members.some(m => m.bMonth === d.getMonth() + 1 && m.bDay === d.getDate())) dots.unshift({ style: { width: '5px', height: '5px', borderRadius: '50%', background: '#fdb20b', flex: 'none' } });
+        if ((store.parish || []).some(p => p.date === dstr)) dots.unshift({ style: { width: '5px', height: '5px', borderRadius: '50%', background: 'var(--faint)', flex: 'none' } });
         v.miniCells.push({
           num: String(d.getDate()),
           click: () => this.setState({ selDay: dstr, vm: d.getMonth(), vy: d.getFullYear() }),
@@ -1439,8 +1647,9 @@ class Component extends DCLogic {
         const dstr = this.ds(d);
         const evs = events.filter(e => e.date === dstr && matchG(e)).sort((a, b) => a.time.localeCompare(b.time));
         const bd = store.members.filter(m => m.bMonth === d.getMonth() + 1 && m.bDay === d.getDate());
-        if (!evs.length && !bd.length) continue;
-        const items = bd.map(m => ({ isB: true, isEv: false, label: 'Birthday — ' + m.name + ' (' + m.group + ')' })).concat(evs.map(ev => {
+        const pvsA = (store.parish || []).filter(p => p.date === dstr);
+        if (!evs.length && !bd.length && !pvsA.length) continue;
+        const items = pvsA.map(p => ({ isP: true, isB: false, isEv: false, label: p.type, click: () => this.openModal({ t: 'pev', id: p.id }) })).concat(bd.map(m => ({ isB: true, isEv: false, label: 'Birthday — ' + m.name + ' (' + m.group + ')' }))).concat(evs.map(ev => {
           const a = this.attend(ev);
           const cancelled = ev.status === 'cancelled';
           const low = !cancelled && a.pct < TH;
@@ -1451,8 +1660,8 @@ class Component extends DCLogic {
             hasInst: instNames.length > 0,
             instLine: '♪ ' + instNames.join(', '),
             time: this.t12p(ev.time),
-            accent: { width: '4px', alignSelf: 'stretch', borderRadius: '99px', background: cancelled ? 'var(--faint)' : this.gColor(ev.group), flex: 'none', minHeight: '34px' },
-            title: this.gLabel(ev.group) + ' · ' + (reh ? 'Rehearsal' : 'Mass') + (ev.occasion ? ' · ' + ev.occasion : ''),
+            accent: { width: '4px', alignSelf: 'stretch', borderRadius: '99px', background: cancelled ? 'var(--faint)' : this.gColorOf(ev), flex: 'none', minHeight: '34px' },
+            title: this.gLabelOf(ev) + ' · ' + (ev.type || 'Mass') + (ev.occasion ? ' · ' + ev.occasion : ''),
             titleStyle: { fontWeight: 800, fontSize: '15px', textDecoration: cancelled ? 'line-through' : 'none', color: cancelled ? 'var(--muted2)' : 'var(--text)' },
             sub: ev.venue,
             att: cancelled ? 'Cancelled' : a.att + '/' + a.exp,
@@ -1513,7 +1722,7 @@ class Component extends DCLogic {
     v.mtNew = () => {
       const id = 'mt' + Date.now();
       this.mutate(st => { st.meetings = st.meetings || []; st.meetings.push({ id, date: todayStr, title: '', attendees: [], agendas: [], notes: '', showGroups: true, created: Date.now() }); });
-      this.setState({ meetOpen: id, confirm: false, pal: null });
+      this.setState({ meetOpen: id, confirm: false, pal: null, tbl: null, agListClosed: false, agClosed: {}, agDel: null });
     };
     const mtCur = meetings.find(m => m.id === S.meetOpen);
     v.mtList = v.isMtg && !mtCur;
@@ -1526,7 +1735,7 @@ class Component extends DCLogic {
         day: String(d.getDate()),
         title: (m.title || '').trim() || 'Untitled meeting',
         sub: this.longDate(m.date) + ' · ' + na + ' attendee' + (na === 1 ? '' : 's') + ' · ' + ng + ' agenda item' + (ng === 1 ? '' : 's'),
-        open: () => this.setState({ meetOpen: m.id, confirm: false, pal: null })
+        open: () => this.setState({ meetOpen: m.id, confirm: false, pal: null, tbl: null, agListClosed: false, agClosed: {}, agDel: null })
       };
     });
     v.mtEmpty = meetings.length === 0;
@@ -1576,16 +1785,58 @@ class Component extends DCLogic {
         if (this._mtSel) this._mtSel.value = ''; if (this._mtName) this._mtName.value = '';
       };
       v.mtNameKey = e => { if (e.key === 'Enter') { e.preventDefault(); v.mtAddAtt(); } };
-      v.mtAgendas = (mtCur.agendas || []).map((t, i) => ({
-        num: (i + 1) + '.', text: t,
-        remove: () => { this.flushMeet(); this.mutate(st => { const m = st.meetings.find(x => x.id === mid); if (m) m.agendas.splice(i, 1); }); }
-      }));
+      const agCl = S.agClosed || {};
+      v.mtAgCount = String((mtCur.agendas || []).length);
+      v.mtAgSolvedCount = String((mtCur.agendas || []).filter(a => a && a.solved).length);
+      v.mtAgListOpen = !S.agListClosed;
+      v.mtAgToggle = () => { this.flushMeet(); this.setState({ agListClosed: !S.agListClosed }); };
+      v.mtAgChev = { display: 'inline-block', transition: 'transform .15s', transform: S.agListClosed ? 'rotate(0deg)' : 'rotate(90deg)' };
+      v.mtAgendas = (mtCur.agendas || []).map((a0, i) => {
+        const a = (typeof a0 === 'string') ? { text: a0, solved: false, solution: '' } : a0;
+        const solved = !!a.solved;
+        const confirming = S.agDel === i;
+        return {
+          num: (i + 1) + '.',
+          text: a.text,
+          textStyle: { flex: 1, fontSize: '13.5px', fontWeight: 700, minWidth: '120px', color: solved ? 'var(--muted)' : 'var(--text)' },
+          solved,
+          chev: agCl[i] ? '▸' : '▾',
+          expand: () => { this.flushMeet(); const nc = Object.assign({}, agCl); nc[i] = !nc[i]; this.setState({ agClosed: nc }); },
+          solveLabel: solved ? '✓ Solved' : 'Mark solved',
+          solveStyle: solved
+            ? { flex: 'none', padding: '5px 11px', border: '1.5px solid #2e9e44', borderRadius: '999px', background: '#2e9e44', color: '#ffffff', fontSize: '11px', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }
+            : { flex: 'none', padding: '5px 11px', border: '1px solid var(--bstrong)', borderRadius: '999px', background: 'var(--card)', color: 'var(--muted)', fontSize: '11px', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' },
+          solve: () => {
+            this.flushMeet();
+            const nowSolved = !solved;
+            this.mutate(st => { const m = st.meetings.find(x => x.id === mid); if (m && m.agendas[i] != null) { const it = (typeof m.agendas[i] === 'string') ? { text: m.agendas[i], solved: false, solution: '' } : m.agendas[i]; it.solved = nowSolved; m.agendas[i] = it; } });
+            const nc = Object.assign({}, agCl); nc[i] = false; this.setState({ agClosed: nc, agDel: null });
+          },
+          showSol: solved && !agCl[i],
+          solution: a.solution || '',
+          onSol: e => {
+            const val = e.target.value;
+            const arr = (mtCur.agendas || []).map((x, j) => { const it = (typeof x === 'string') ? { text: x, solved: false, solution: '' } : Object.assign({}, x); if (j === i) it.solution = val; return it; });
+            this.queueMeet(mid, { agendas: arr }, 500);
+          },
+          delLabel: confirming ? 'Delete?' : '×',
+          delStyle: confirming
+            ? { flex: 'none', border: 'none', background: '#bc0700', color: '#ffffff', borderRadius: '999px', padding: '5px 11px', fontSize: '11px', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }
+            : { flex: 'none', border: 'none', background: 'none', color: 'var(--muted2)', fontSize: '15px', fontWeight: 800, cursor: 'pointer', padding: '0 4px', lineHeight: 1 },
+          remove: () => {
+            if (!confirming) { this.setState({ agDel: i }); return; }
+            this.flushMeet();
+            this.mutate(st => { const m = st.meetings.find(x => x.id === mid); if (m) m.agendas.splice(i, 1); });
+            this.setState({ agDel: null, agClosed: {} });
+          }
+        };
+      });
       v.mtAgRef = el => { this._mtAg = el; };
       v.mtAddAg = () => {
         const t = this._mtAg ? this._mtAg.value.trim() : '';
         if (!t) return;
         this.flushMeet();
-        this.mutate(st => { const m = st.meetings.find(x => x.id === mid); if (m) m.agendas.push(t); });
+        this.mutate(st => { const m = st.meetings.find(x => x.id === mid); if (m) m.agendas.push({ text: t, solved: false, solution: '' }); });
         if (this._mtAg) this._mtAg.value = '';
       };
       v.mtAgKey = e => { if (e.key === 'Enter') { e.preventDefault(); v.mtAddAg(); } };
@@ -1609,8 +1860,8 @@ class Component extends DCLogic {
       v.tbBlock = e => { cmd('formatBlock', e.target.value); e.target.value = 'P'; };
       v.tbSize = e => { if (e.target.value) cmd('fontSize', e.target.value); e.target.value = ''; };
       v.tbClear = () => { cmd('removeFormat'); cmd('formatBlock', 'P'); };
-      v.tbFore = () => this.setState({ pal: S.pal === 'fore' ? null : 'fore' });
-      v.tbHi = () => this.setState({ pal: S.pal === 'hi' ? null : 'hi' });
+      v.tbFore = () => this.setState({ pal: S.pal === 'fore' ? null : 'fore', tbl: null });
+      v.tbHi = () => this.setState({ pal: S.pal === 'hi' ? null : 'hi', tbl: null });
       v.palOpen = !!S.pal;
       const fores = ['#111111', '#bc0700', '#fc4c0e', '#e09600', '#2e9e44', '#1f6feb', '#6d3fae', '#8a7a6f'];
       const his = ['#fff3a3', '#ffd6cf', '#ffe2b8', '#d2f4d8', '#d6e6ff', '#f0dcff'];
@@ -1619,6 +1870,20 @@ class Component extends DCLogic {
         style: { width: '26px', height: '26px', borderRadius: '7px', border: cl === 'none' ? '1.5px dashed var(--bstrong)' : '1px solid var(--line)', background: cl === 'none' ? 'var(--card)' : cl, cursor: 'pointer', padding: 0 },
         click: () => { cmd(S.pal === 'hi' ? 'hiliteColor' : 'foreColor', cl === 'none' ? 'transparent' : cl); this.setState({ pal: null }); }
       }));
+      v.tbTable = () => this.setState({ tbl: S.tbl ? null : { r: 3, c: 3 }, pal: null });
+      v.tblOpen = !!S.tbl;
+      const tb0 = S.tbl || { r: 3, c: 3 };
+      v.tblRows = String(tb0.r); v.tblCols = String(tb0.c);
+      v.tblRminus = () => this.setState({ tbl: { r: Math.max(1, tb0.r - 1), c: tb0.c } });
+      v.tblRplus = () => this.setState({ tbl: { r: Math.min(15, tb0.r + 1), c: tb0.c } });
+      v.tblCminus = () => this.setState({ tbl: { r: tb0.r, c: Math.max(1, tb0.c - 1) } });
+      v.tblCplus = () => this.setState({ tbl: { r: tb0.r, c: Math.min(8, tb0.c + 1) } });
+      v.tblInsert = () => {
+        let rows = '';
+        for (let r = 0; r < tb0.r; r++) { let tds = ''; for (let c2 = 0; c2 < tb0.c; c2++) tds += '<td style="border:1px solid var(--bstrong);padding:6px 9px;min-width:48px;vertical-align:top"><br></td>'; rows += '<tr>' + tds + '</tr>'; }
+        cmd('insertHTML', '<table style="border-collapse:collapse;width:100%;margin:10px 0">' + rows + '</table><p><br></p>');
+        this.setState({ tbl: null });
+      };
     }
 
     // ---- Modals ----
@@ -1629,15 +1894,18 @@ class Component extends DCLogic {
     v.mMform = !!M && M.t === 'mform';
     v.mPin = !!M && M.t === 'pin';
     v.mSettings = !!M && M.t === 'settings';
+    v.mPev = !!M && M.t === 'pev';
 
     if (v.mDay) {
       v.dayTitle = this.longDate(M.date);
       const list = events.filter(e => e.date === M.date).sort((a, b) => a.time.localeCompare(b.time));
-      v.dayEvents = list.map(ev => this.buildEventRow(ev));
-      v.dayEmpty = list.length === 0;
+      v.dayEvents = list.map(ev => this.buildEventRow(ev, () => this.pushModal({ t: 'event', id: ev.id })));
+      const pvsD = (store.parish || []).filter(p => p.date === M.date);
+      v.dayParish = pvsD.map(p => ({ title: p.occasion || p.type, sub: p.type + ' · ' + p.venue, open: () => this.pushModal({ t: 'pev', id: p.id }) }));
+      v.dayEmpty = list.length === 0 && pvsD.length === 0;
       const d = this.parse(M.date);
       v.dayBdays = store.members.filter(m => m.bMonth === d.getMonth() + 1 && m.bDay === d.getDate()).map(m => ({ label: m.name + ' (' + this.gName(m.group) + ')' }));
-      v.dayAdd = () => this.openEform(null, M.date);
+      v.dayAdd = () => this.openEform(null, M.date, null, true);
     }
 
     if (v.mEvent) {
@@ -1646,11 +1914,13 @@ class Component extends DCLogic {
         const a = this.attend(ev);
         const cancelled = ev.status === 'cancelled';
         const low = !cancelled && a.pct < TH;
-        v.evChipStyle = this.chip(this.gColor(ev.group));
-        v.evGroupLabel = ev.group ? ev.group + ' — ' + this.gName(ev.group) : 'GC — Grand Choir';
-        v.evTitle = ev.type === 'rehearsal' ? 'Rehearsal' : 'Mass';
+        const gcodes = this.gCodesOf(ev);
+        v.evChipStyle = this.chip(this.gColorOf(ev));
+        v.evGroupLabel = gcodes.length === 0 ? 'GC — Grand Choir' : gcodes.length === 1 ? gcodes[0] + ' — ' + this.gName(gcodes[0]) : gcodes.join(' + ');
+        v.evTitle = ev.type || 'Mass';
         v.evWhen = this.longDate(ev.date) + ' · ' + this.t12p(ev.time) + ' · ' + ev.venue;
         v.evHasOccasion = !!ev.occasion; v.evOccasion = ev.occasion;
+        v.evHasNotes = !!ev.notes; v.evNotes = ev.notes;
         v.evCancelled = cancelled;
         v.evAtt = a.att + ' / ' + a.exp; v.evPct = a.pct; v.evExpected = a.exp;
         v.evAttStyle = { fontWeight: 800, fontSize: '19px', fontWeight: 800, color: cancelled ? 'var(--muted2)' : low ? 'var(--redink)' : 'var(--text)' };
@@ -1664,7 +1934,7 @@ class Component extends DCLogic {
           remove: () => this.mutate(st => { const x = st.events.find(y => y.id === ev.id); if (x) x.absences.splice(i, 1); })
         }));
         const absNames = (ev.absences || []).map(ab => ab.name);
-        const pool = ev.group ? store.members.filter(m => m.group === ev.group) : store.members;
+        const pool = gcodes.length ? store.members.filter(m => gcodes.includes(m.group)) : store.members;
         v.evAbsOptions = pool.filter(m => !absNames.includes(m.name)).map(m => ({ name: m.name, label: m.name + ' (' + m.group + ')' }));
         v.absSelRef = el => { this._absSel = el; };
         v.absNameRef = el => { this._absName = el; };
@@ -1676,6 +1946,7 @@ class Component extends DCLogic {
           this.mutate(st => { const x = st.events.find(y => y.id === ev.id); if (x && !x.absences.some(ab => ab.name === name)) x.absences.push({ name, reason }); });
           if (this._absSel) this._absSel.value = ''; if (this._absName) this._absName.value = ''; if (this._absReason) this._absReason.value = '';
         };
+        v.absKey = e => { if (e.key === 'Enter') { e.preventDefault(); v.addAbsence(); } };
         const instPool = store.members.filter(m => m.instrumentalist);
         v.evNoInstOptions = instPool.length === 0;
         v.evInstOptions = instPool.map(m => {
@@ -1686,37 +1957,119 @@ class Component extends DCLogic {
             toggle: () => this.mutate(st => { const x = st.events.find(y => y.id === ev.id); if (!x) return; x.insts = x.insts || []; const j = x.insts.indexOf(m.id); if (j >= 0) x.insts.splice(j, 1); else x.insts.push(m.id); })
           };
         });
-        v.evEdit = () => this.openEform(ev);
+        v.evEdit = () => this.openEform(ev, null, null, true);
         v.evDeleteLabel = S.confirm ? 'Tap again to confirm delete' : 'Delete';
         v.evDelete = () => {
           if (!S.confirm) { this.setState({ confirm: true }); return; }
           this.mutate(st => { st.events = st.events.filter(y => y.id !== ev.id); });
-          this.setState({ modal: null, confirm: false });
+          if ((S.mstack || []).length) this.doExit('back'); else this.doExit('close');
         };
       }
     }
 
     if (v.mEform) {
       const f = this.form || {};
-      v.eformTitle = M.id ? 'Edit schedule' : 'Add schedule';
-      v.fDate = f.date; v.fTime = f.time; v.fType = f.type; v.fGroup = f.group; v.fVenue = f.venue; v.fOccasion = f.occasion; v.fExpected = f.expected;
+      const isParish = f.kind === 'parish';
+      v.eformTitle = M.pid ? 'Edit parish event' : M.id ? 'Edit schedule' : 'Add schedule';
+      v.efShowKind = !M.id && !M.pid;
+      v.efIsChoir = !isParish; v.efIsParish = isParish;
+      const kseg = act => act
+        ? { padding: '7px 15px', borderRadius: '999px', border: 'none', background: '#bc0700', color: '#ffffff', fontSize: '12.5px', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }
+        : { padding: '7px 15px', borderRadius: '999px', border: 'none', background: 'transparent', color: 'var(--muted)', fontSize: '12.5px', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' };
+      v.efKindChoirStyle = kseg(!isParish); v.efKindParishStyle = kseg(isParish);
+      v.efKindChoir = () => { this.form = this.form || {}; this.form.kind = 'choir'; this.forceUpdate(); };
+      v.efKindParish = () => { this.form = this.form || {}; this.form.kind = 'parish'; this.forceUpdate(); };
+      v.fDate = f.date; v.fTime = f.time; v.fOccasion = f.occasion; v.fExpected = f.expected; v.fNotes = f.notes;
+      v.occasionLabel = isParish ? 'Occasion' : 'Occasion (optional)';
+      v.efNewType = !!S.efNewType; v.efNewVenue = !!S.efNewVenue;
+      const typeList = ((store.settings && store.settings.types) || ['Mass', 'Rehearsal']).slice();
+      if (f.type && !typeList.includes(f.type)) typeList.push(f.type);
+      v.typeOptions = typeList.map(t => ({ val: t, label: t })).concat([{ val: '__new', label: '＋ Add a new type…' }]);
+      v.fTypeSel = S.efNewType ? '__new' : (f.type || 'Mass');
+      v.onFType = e => { const val = e.target.value; this._dirty = true; this.form = this.form || {}; if (val === '__new') this.setState({ efNewType: true }); else { this.form.type = val; this.setState({ efNewType: false }); } };
+      const venueList = ((store.settings && store.settings.venues) || ['Parish', 'Sta. Monica Hall', 'St. Ambrose Chapel', 'San Cristobal Chapel']).slice();
+      if (f.venue && !venueList.includes(f.venue)) venueList.push(f.venue);
+      v.venueOptions = venueList.map(x => ({ val: x, label: x })).concat([{ val: '__new', label: '＋ Add a new venue…' }]);
+      v.fVenueSel = S.efNewVenue ? '__new' : (f.venue || 'Parish');
+      v.onFVenue = e => { const val = e.target.value; this._dirty = true; this.form = this.form || {}; if (val === '__new') this.setState({ efNewVenue: true }); else { this.form.venue = val; this.setState({ efNewVenue: false }); } };
+      const selG = f.groups || [];
+      v.fGroupPills = [{ code: 'GC', name: 'Grand Choir — all groups together', color: '#6d3fae' }].concat(this.GROUPS()).map(g => {
+        const on = g.code === 'GC' ? selG.length === 0 : selG.includes(g.code);
+        return {
+          label: g.code, name: g.name, style: this.pill(on, g.color),
+          click: () => { this._dirty = true; this.form = this.form || {}; this.form.groups = g.code === 'GC' ? [] : (on ? selG.filter(c => c !== g.code) : selG.concat([g.code])); this.forceUpdate(); }
+        };
+      });
+      v.fGroupsHint = selG.length ? 'Selected: ' + selG.map(c => this.gName(c)).join(' + ') : 'Grand Choir — all groups sing together';
+      const efPool = store.members.filter(m => m.instrumentalist);
+      v.efNoInstOptions = efPool.length === 0;
+      const selI = f.insts || [];
+      v.efInstPills = efPool.map(m => {
+        const on = selI.includes(m.id);
+        return {
+          label: m.name + (m.instrument ? ' · ' + m.instrument : ''),
+          style: this.pill(on, '#fc4c0e'),
+          click: () => { this._dirty = true; this.form = this.form || {}; this.form.insts = on ? selI.filter(x => x !== m.id) : selI.concat([m.id]); this.forceUpdate(); }
+        };
+      });
       v.saveEform = () => {
         const f2 = this.form || {};
+        const type = S.efNewType ? (f2.typeNew || '').trim() : (f2.type || 'Mass');
+        const venue = S.efNewVenue ? (f2.venueNew || '').trim() : (f2.venue || 'Parish');
+        const par = f2.kind === 'parish';
         if (!f2.date) { this.setState({ formError: 'Please choose a date.' }); return; }
-        if (!f2.time) { this.setState({ formError: 'Please choose a time.' }); return; }
-        const exp = Math.max(1, Number(f2.expected) || this.defExpected());
-        const g = this.G(f2.group);
-        const venue = (f2.venue || '').trim() || (g ? g.venue : 'San Agustin Parish');
-        this.mutate(st => {
-          if (M.id) {
-            const x = st.events.find(y => y.id === M.id);
-            if (x) Object.assign(x, { date: f2.date, time: f2.time, type: f2.type || 'mass', group: f2.group || '', venue, occasion: (f2.occasion || '').trim(), expected: exp });
-          } else {
-            st.events.push({ id: 'e' + Date.now(), date: f2.date, time: f2.time, type: f2.type || 'mass', group: f2.group || '', venue, occasion: (f2.occasion || '').trim(), expected: exp, absences: [], insts: [], status: 'active' });
-          }
-        });
-        this.setState({ modal: M.id ? { t: 'event', id: M.id } : null, formError: '' });
+        if (!type) { this.setState({ formError: 'Please type a name for the new type.' }); return; }
+        if (!venue) { this.setState({ formError: 'Please type a name for the new venue.' }); return; }
+        if (!par && !f2.time) { this.setState({ formError: 'Please choose a time.' }); return; }
+        if (par && !(f2.occasion || '').trim()) { this.setState({ formError: 'Please enter the occasion — e.g. Feast of San Agustin.' }); return; }
+        const remember = st => {
+          st.settings = st.settings || { pin: '1234' };
+          if (!Array.isArray(st.settings.types)) st.settings.types = ['Mass', 'Rehearsal'];
+          if (!Array.isArray(st.settings.venues)) st.settings.venues = ['Parish', 'Sta. Monica Hall', 'St. Ambrose Chapel', 'San Cristobal Chapel'];
+          if (!st.settings.types.some(t => t.toLowerCase() === type.toLowerCase())) st.settings.types.push(type);
+          if (!st.settings.venues.some(x => x.toLowerCase() === venue.toLowerCase())) st.settings.venues.push(venue);
+        };
+        if (par) {
+          this.mutate(st => {
+            remember(st); st.parish = st.parish || [];
+            const rec = { date: f2.date, type, venue, occasion: (f2.occasion || '').trim(), notes: (f2.notes || '').trim() };
+            if (M.pid) { const x = st.parish.find(p => p.id === M.pid); if (x) Object.assign(x, rec); }
+            else st.parish.push(Object.assign({ id: 'p' + Date.now() }, rec));
+          });
+        } else {
+          const exp = Math.max(1, Number(f2.expected) || this.defExpected());
+          const groups = (f2.groups || []).slice();
+          this.mutate(st => {
+            remember(st);
+            const rec = { date: f2.date, time: f2.time, type, groups, venue, occasion: (f2.occasion || '').trim(), expected: exp, notes: (f2.notes || '').trim(), insts: (f2.insts || []).slice() };
+            if (M.id) { const x = st.events.find(y => y.id === M.id); if (x) Object.assign(x, rec); }
+            else st.events.push(Object.assign({ id: 'e' + Date.now(), absences: [], status: 'active' }, rec));
+          });
+        }
+        this._dirty = false;
+        if ((S.mstack || []).length) this.doExit('back');
+        else if (M.id) this.setState({ modal: { t: 'event', id: M.id }, formError: '', efNewType: false, efNewVenue: false, exitConfirm: null });
+        else if (M.pid) this.setState({ modal: { t: 'pev', id: M.pid }, formError: '', efNewType: false, efNewVenue: false, exitConfirm: null });
+        else this.doExit('close');
       };
+      this._saveCurrent = v.saveEform;
+    }
+
+    if (v.mPev) {
+      const pv = (store.parish || []).find(p => p.id === M.id);
+      if (!pv) { v.mPev = false; } else {
+        v.pvType = pv.type;
+        v.pvOccasion = pv.occasion || pv.type;
+        v.pvWhen = this.longDate(pv.date) + ' · ' + pv.venue;
+        v.pvHasNotes = !!pv.notes; v.pvNotes = pv.notes;
+        v.pvEdit = () => this.openPform(pv, true);
+        v.pvDeleteLabel = S.confirm ? 'Tap again to confirm delete' : 'Delete';
+        v.pvDelete = () => {
+          if (!S.confirm) { this.setState({ confirm: true }); return; }
+          this.mutate(st => { st.parish = (st.parish || []).filter(p => p.id !== pv.id); });
+          if ((S.mstack || []).length) this.doExit('back'); else this.doExit('close');
+        };
+      }
     }
 
     if (v.mMform) {
@@ -1733,6 +2086,7 @@ class Component extends DCLogic {
       v.onBdayBlur = e => {
         const r = this.parseBday(e.target.value);
         if (r === null) { this.setState({ bdErr: true }); return; }
+        this._dirty = true;
         this.form = this.form || {};
         this.form.bMonth = r.m || ''; this.form.bDay = r.d || '';
         e.target.value = this.fmtBday(r.m, r.d);
@@ -1753,6 +2107,7 @@ class Component extends DCLogic {
             ? { minHeight: '38px', border: 'none', borderRadius: '8px', background: '#bc0700', color: '#ffffff', fontSize: '13px', fontWeight: 800, cursor: 'pointer', padding: 0 }
             : { minHeight: '38px', border: 'none', borderRadius: '8px', background: 'var(--card)', color: 'var(--text)', fontSize: '13px', fontWeight: 700, cursor: 'pointer', padding: 0 },
           click: (dd => () => {
+            this._dirty = true;
             this.form = this.form || {};
             this.form.bMonth = bp.m; this.form.bDay = dd;
             if (this._bdayIn) this._bdayIn.value = this.fmtBday(bp.m, dd);
@@ -1760,14 +2115,14 @@ class Component extends DCLogic {
           })(day)
         });
       }
-      v.bpClear = () => { this.form = this.form || {}; this.form.bMonth = ''; this.form.bDay = ''; if (this._bdayIn) this._bdayIn.value = ''; this.setState({ bdPick: { open: false, m: bp.m }, bdErr: false }); };
+      v.bpClear = () => { this._dirty = true; this.form = this.form || {}; this.form.bMonth = ''; this.form.bDay = ''; if (this._bdayIn) this._bdayIn.value = ''; this.setState({ bdPick: { open: false, m: bp.m }, bdErr: false }); };
       v.bpClose = () => this.setState({ bdPick: { open: false, m: bp.m } });
       v.mformCanDelete = !!M.id;
       v.memDeleteLabel = S.confirm ? 'Tap again to confirm' : 'Delete member';
       v.deleteMember = () => {
         if (!S.confirm) { this.setState({ confirm: true }); return; }
         this.mutate(st => { st.members = st.members.filter(m => m.id !== M.id); st.events.forEach(e => { e.insts = (e.insts || []).filter(id => id !== M.id); }); });
-        this.setState({ modal: null, confirm: false });
+        this.doExit('close');
       };
       v.saveMform = () => {
         const f2 = this.form || {};
@@ -1778,8 +2133,10 @@ class Component extends DCLogic {
           if (M.id) { const x = st.members.find(m => m.id === M.id); if (x) Object.assign(x, rec); }
           else st.members.push(Object.assign({ id: 'm' + Date.now() }, rec));
         });
-        this.setState({ modal: null, formError: '' });
+        this._dirty = false;
+        this.doExit('close');
       };
+      this._saveCurrent = v.saveMform;
     }
 
     if (v.mSettings) {
@@ -1805,8 +2162,9 @@ class Component extends DCLogic {
         if (cur !== (store.settings.pin || '1234')) { this.setState({ formError: 'Current PIN is incorrect.' }); return; }
         if (nw.length < 4) { this.setState({ formError: 'New PIN must be at least 4 characters.' }); return; }
         this.mutate(st => { st.settings.pin = nw; });
-        this.setState({ modal: null, formError: '' });
+        if ((S.mstack || []).length) this.doExit('back'); else this.doExit('close');
       };
+      this._saveCurrent = v.savePin;
     }
 
     return v;
