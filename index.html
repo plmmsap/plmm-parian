@@ -204,6 +204,7 @@ input::-webkit-date-and-time-value{text-align:left}
     <div style="display:flex;gap:16px;align-items:flex-start">
     <sc-if value="{{ calSidebar }}" hint-placeholder-val="{{ false }}">
     <div style="width:225px;flex:none;display:flex;flex-direction:column;gap:10px">
+      <button onClick="{{ toggleSide }}" title="Hide panel" style="align-self:flex-end;border:none;background:none;color:var(--muted2);font-size:11.5px;font-weight:800;cursor:pointer;padding:0 2px" style-hover="color:var(--redink)">« Hide panel</button>
       <div style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px">
         <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px">
           <div style="font-size:12.5px;font-weight:800;flex:1">{{ miniLabel }}</div>
@@ -247,6 +248,7 @@ input::-webkit-date-and-time-value{text-align:left}
     </div>
     </sc-if>
     <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:12px">
+    <sc-if value="{{ sideShowExpand }}" hint-placeholder-val="{{ false }}"><button onClick="{{ toggleSide }}" title="Show panel" style="align-self:flex-start;border:none;background:none;color:var(--muted2);font-size:11.5px;font-weight:800;cursor:pointer;padding:0 2px" style-hover="color:var(--redink)">» Show panel</button></sc-if>
     <sc-if value="{{ notShot }}" hint-placeholder-val="{{ true }}">
       <sc-if value="{{ deskToolbar }}" hint-placeholder-val="{{ true }}">
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -870,7 +872,7 @@ input::-webkit-date-and-time-value{text-align:left}
       <div style="min-width:0"><div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Date</div><input name="date" type="date" defaultValue="{{ fDate }}" onChange="{{ onF }}" style="display:block;width:100%;min-width:0;max-width:100%;box-sizing:border-box;padding:9px 10px;height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:14px;background:var(--card);text-align:left"></div>
       <sc-if value="{{ efIsChoir }}" hint-placeholder-val="{{ true }}"><div style="min-width:0"><div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Time</div><input name="time" type="time" defaultValue="{{ fTime }}" onChange="{{ onF }}" style="display:block;width:100%;min-width:0;max-width:100%;box-sizing:border-box;padding:9px 10px;height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:14px;background:var(--card);text-align:left"></div></sc-if>
       <div style="min-width:0"><div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Type</div><select defaultValue="{{ fTypeSel }}" onChange="{{ onFType }}" style="width:100%;min-width:0;box-sizing:border-box;padding:9px 10px;min-height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:14px;background:var(--card)"><sc-for list="{{ typeOptions }}" as="o" hint-placeholder-count="3"><option value="{{ o.val }}">{{ o.label }}</option></sc-for></select><sc-if value="{{ efNewType }}" hint-placeholder-val="{{ false }}"><input name="typeNew" onChange="{{ onF }}" placeholder="Name the new type (e.g. Recollection)" style="width:100%;min-width:0;box-sizing:border-box;padding:9px 10px;min-height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:14px;margin-top:6px"></sc-if></div>
-      <sc-if value="{{ efIsChoir }}" hint-placeholder-val="{{ true }}"><div style="min-width:0"><div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Expected attendees</div><input name="expected" type="number" min="1" defaultValue="{{ fExpected }}" onChange="{{ onF }}" style="width:100%;min-width:0;box-sizing:border-box;padding:9px 10px;min-height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:14px"></div></sc-if>
+      <sc-if value="{{ efIsChoir }}" hint-placeholder-val="{{ true }}"><div style="min-width:0"><div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Expected attendees</div><input name="expected" type="number" min="1" value="{{ fExpected }}" onChange="{{ onExpected }}" style="width:100%;min-width:0;box-sizing:border-box;padding:9px 10px;min-height:44px;border:1px solid var(--bstrong);border-radius:9px;font-size:14px"><sc-if value="{{ expAuto }}" hint-placeholder-val="{{ false }}"><div style="font-size:10.5px;color:var(--muted2);margin-top:4px">Auto from group size · edit to override</div></sc-if></div></sc-if>
       <sc-if value="{{ efIsChoir }}" hint-placeholder-val="{{ true }}">
       <div style="grid-column:1/-1">
         <div style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Choir groups <span style="font-weight:700;text-transform:none;letter-spacing:0">(tap to pick one or more)</span></div>
@@ -1000,6 +1002,13 @@ input::-webkit-date-and-time-value{text-align:left}
           <button onClick="{{ expPlus }}" style="width:40px;height:40px;border:1px solid var(--bstrong);border-radius:999px;background:var(--card);color:var(--muted);font-size:18px;font-weight:800;cursor:pointer;line-height:1">+</button>
         </div>
       </div>
+      <div style="display:flex;align-items:center;gap:10px;border-top:1px solid var(--line2);padding-top:11px;flex-wrap:wrap">
+        <div style="flex:1;min-width:150px">
+          <div style="font-size:14px;font-weight:800">Recalculate expected from group size</div>
+          <div style="font-size:12px;color:var(--muted2);line-height:1.5">Sets every schedule's expected attendees to how many members are in its choir group(s). No-group events become 0. This runs once automatically after the update — use this to run it again.</div>
+        </div>
+        <button onClick="{{ recalcExp }}" style="flex:none;min-height:40px;padding:0 16px;border:1.5px solid #bc0700;border-radius:999px;background:var(--card);color:var(--redink);font-size:12.5px;font-weight:800;cursor:pointer" style-hover="background:#bc0700;color:#ffffff">Recalculate now</button>
+      </div>
     </div>
     <div style="border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:11px">
       <div style="font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted2)">Appearance &amp; security</div>
@@ -1078,8 +1087,10 @@ class Component extends DCLogic {
     try { theme = localStorage.getItem('plmm-theme') || 'light'; } catch (e) {}
     let ws0 = 0;
     try { ws0 = Number(localStorage.getItem('plmm-weekstart')) || 0; } catch (e) {}
+    let sc0 = false;
+    try { sc0 = localStorage.getItem('plmm-sidecollapse') === '1'; } catch (e) {}
     const t = new Date();
-    return { store, unlocked, theme, isMobile: (typeof window !== 'undefined' && window.innerWidth < 760), selDay: this.ds(t), page: 'dash', vy: t.getFullYear(), vm: t.getMonth(), checks: { CSA: true, SAC: true, SMC: true, HSR: true, SCC: true, GC: true }, calView: 'month', showLegend: true, menuOpen: false, weekStartDow: ws0, miniVm: t.getMonth(), miniVy: t.getFullYear(), pickerOpen: false, mvoice: 'ALL', minst: false, msort: 'az', filter: 'ALL', mfilter: 'ALL', q: '', shot: false, modal: null, mstack: [], exitConfirm: null, efNewType: false, efNewVenue: false, pinError: false, formError: '', confirm: false, sync: 'local', meetOpen: null, pal: null, tbl: null, agListClosed: false, agClosed: {}, agDel: null, copySel: [], copyTarget: '', dragging: null, dragOverDate: null };
+    return { store, unlocked, theme, isMobile: (typeof window !== 'undefined' && window.innerWidth < 760), selDay: this.ds(t), page: 'dash', vy: t.getFullYear(), vm: t.getMonth(), checks: { CSA: true, SAC: true, SMC: true, HSR: true, SCC: true, GC: true }, calView: 'month', showLegend: true, menuOpen: false, weekStartDow: ws0, miniVm: t.getMonth(), miniVy: t.getFullYear(), pickerOpen: false, mvoice: 'ALL', minst: false, msort: 'az', filter: 'ALL', mfilter: 'ALL', q: '', shot: false, modal: null, mstack: [], exitConfirm: null, efNewType: false, efNewVenue: false, pinError: false, formError: '', confirm: false, sync: 'local', meetOpen: null, pal: null, tbl: null, agListClosed: false, agClosed: {}, agDel: null, copySel: [], copyTarget: '', dragging: null, dragOverDate: null, sideCollapsed: sc0 };
   }
 
   GROUPS() {
@@ -1113,6 +1124,7 @@ class Component extends DCLogic {
     (store.meetings || []).forEach(m => {
       m.agendas = (m.agendas || []).map(a => (typeof a === 'string') ? { text: a, solved: false, solution: '' } : a);
     });
+    if (!store.settings.expectedAutofilledV1) { this.recalcExpectedAll(store); store.settings.expectedAutofilledV1 = true; }
     return store;
   }
   isReh(ev) { return (ev.type || '').toLowerCase() === 'rehearsal'; }
@@ -1221,6 +1233,22 @@ class Component extends DCLogic {
   }
   threshold() { const stg = this.state && this.state.store && this.state.store.settings; const val = stg && stg.cancelThreshold != null ? stg.cancelThreshold : (this.props.cancelThreshold ?? 40); return Number(val) || 40; }
   defExpected() { const stg = this.state && this.state.store && this.state.store.settings; const val = stg && stg.defaultExpected != null ? stg.defaultExpected : (this.props.defaultExpected ?? 10); return Math.max(1, Number(val) || 10); }
+  groupMemberCount(f) {
+    const members = (this.state.store && this.state.store.members) || [];
+    if (!f) return null;
+    if (f.nogroup) return 0;
+    const g = (f.groups || []);
+    if (!g.length) return members.length;
+    return members.filter(m => g.includes(m.group)).length;
+  }
+  recalcExpectedAll(st) {
+    const members = st.members || [];
+    (st.events || []).forEach(e => {
+      if (e.nogroup) { e.expected = 0; return; }
+      const g = (e.groups && e.groups.length) ? e.groups : [];
+      e.expected = g.length ? members.filter(m => g.includes(m.group)).length : members.length;
+    });
+  }
   bdayMonthMap() {
     if (this._bmMap) return this._bmMap;
     const map = {};
@@ -1277,8 +1305,9 @@ class Component extends DCLogic {
   }
   openEform(ev, date, groups, push) {
     this.form = ev
-      ? { kind: 'choir', date: ev.date, time: ev.time, type: ev.type, groups: (ev.groups || []).slice(), nogroup: !!ev.nogroup, venue: ev.venue, occasion: ev.occasion, expected: ev.expected, notes: ev.notes || '', insts: (ev.insts || []).slice() }
-      : { kind: 'choir', date: date || this.ds(new Date()), time: '07:00', type: 'Mass', groups: (groups || []).slice(), nogroup: false, venue: 'Parish', occasion: '', expected: this.defExpected(), notes: '', insts: [] };
+      ? { kind: 'choir', date: ev.date, time: ev.time, type: ev.type, groups: (ev.groups || []).slice(), nogroup: !!ev.nogroup, venue: ev.venue, occasion: ev.occasion, expected: ev.expected, notes: ev.notes || '', insts: (ev.insts || []).slice(), expTouched: true }
+      : { kind: 'choir', date: date || this.ds(new Date()), time: '07:00', type: 'Mass', groups: (groups || []).slice(), nogroup: false, venue: 'Parish', occasion: '', expected: this.defExpected(), notes: '', insts: [], expTouched: false };
+    if (!this.form.expTouched) { const c = this.groupMemberCount(this.form); if (c != null) this.form.expected = c; }
     const m = { t: 'eform', id: ev ? ev.id : null };
     if (push) this.pushModal(m); else this.openModal(m);
   }
@@ -1322,8 +1351,8 @@ class Component extends DCLogic {
       chipStyle: this.chip(this.gColorOf(ev)),
       title: (ev.type || 'Mass') + (ev.occasion ? ' · ' + ev.occasion : ''),
       sub: this.t12p(ev.time) + ' · ' + ev.venue,
-      att: cancelled ? 'Cancelled' : a.att + '/' + a.exp,
-      attSub: cancelled ? '' : a.pct + '% attending',
+      att: cancelled ? 'Cancelled' : (Number(ev.expected) > 0 ? a.att + '/' + a.exp : ''),
+      attSub: (cancelled || !(Number(ev.expected) > 0)) ? '' : a.pct + '% attending',
       pct: a.pct,
       attStyle: { fontWeight: 800, fontSize: '15px', color: cancelled ? 'var(--muted2)' : (low ? 'var(--redink)' : 'var(--text)'), whiteSpace: 'nowrap' },
       hasInst: insts.length > 0,
@@ -1434,6 +1463,7 @@ class Component extends DCLogic {
       openSettings: () => this.openModal({ t: 'settings' }),
       todayLong: this.longDate(todayStr),
       onF: e => { const t = e.target; this._dirty = true; this.form = this.form || {}; this.form[t.name] = t.type === 'checkbox' ? t.checked : t.value; },
+      onExpected: e => { this._dirty = true; this.form = this.form || {}; this.form.expected = e.target.value; this.form.expTouched = true; this.forceUpdate(); },
       formError: !!S.formError, formErrorMsg: S.formError
     };
 
@@ -1513,7 +1543,9 @@ class Component extends DCLogic {
     const selD0 = this.parse(S.selDay || todayStr);
     const weekStart = new Date(selD0.getFullYear(), selD0.getMonth(), selD0.getDate() - ((selD0.getDay() - WS + 7) % 7));
     const mobileCal = S.isMobile && !S.shot && (view === 'month' || view === 'week');
-    v.calSidebar = !S.isMobile && !S.shot;
+    v.calSidebar = !S.isMobile && !S.shot && !S.sideCollapsed;
+    v.sideShowExpand = !S.isMobile && !S.shot && S.sideCollapsed;
+    v.toggleSide = () => { const n = !S.sideCollapsed; try { localStorage.setItem('plmm-sidecollapse', n ? '1' : '0'); } catch (e) {} this.setState({ sideCollapsed: n }); };
     v.mobCalControls = S.isMobile && !S.shot;
     v.calGrid = view === 'month' && !mobileCal;
     v.calWeek = view === 'week' && !mobileCal;
@@ -1659,7 +1691,7 @@ class Component extends DCLogic {
               : Object.assign(base, { background: col, color: '#ffffff' });
           return {
             left: this.t12p(ev.time) + ' | ' + this.gLabelOf(ev),
-            right: (lw ? '\u26A0 ' : '') + aa.att + '/' + aa.exp,
+            right: Number(ev.expected) > 0 ? ((lw ? '\u26A0 ' : '') + aa.att + '/' + aa.exp) : '',
             hasInst: instNames.length > 0,
             inst: '\u266A ' + instNames.join(', '),
             title: (ev.type || 'Mass') + ' · ' + this.t12(ev.time) + ' · ' + ev.venue + ' · ' + aa.att + '/' + aa.exp + ' attending' + (instNames.length ? ' · \u266A ' + instNames.join(', ') : '') + (lw ? ' (LOW ATTENDANCE)' : '') + (cancelled ? ' (CANCELLED)' : ''),
@@ -1698,7 +1730,7 @@ class Component extends DCLogic {
             const base = { borderRadius: '8px', padding: '5px 7px', cursor: 'grab', overflow: 'hidden' };
             return {
               l1: this.t12p(ev.time) + ' | ' + this.gLabelOf(ev),
-              l2: cancelled ? 'Cancelled' : a.att + '/' + a.exp + (low ? ' · \u26A0 LOW' : ''),
+              l2: cancelled ? 'Cancelled' : (Number(ev.expected) > 0 ? a.att + '/' + a.exp + (low ? ' · \u26A0 LOW' : '') : ''),
               title: (ev.type || 'Mass') + ' · ' + this.t12(ev.time) + ' · ' + ev.venue,
               style: cancelled ? Object.assign(base, { background: 'var(--line2)', color: 'var(--muted2)', textDecoration: 'line-through' }) : reh ? Object.assign(base, { background: 'var(--card)', border: '1.5px solid ' + col, color: col }) : Object.assign(base, { background: col, color: '#ffffff' }),
               click: e => { e.stopPropagation(); this.openModal({ t: 'event', id: ev.id }); },
@@ -2119,6 +2151,7 @@ class Component extends DCLogic {
       v.efKindChoir = () => { this.form = this.form || {}; this.form.kind = 'choir'; this.forceUpdate(); };
       v.efKindParish = () => { this.form = this.form || {}; this.form.kind = 'parish'; this.forceUpdate(); };
       v.fDate = f.date; v.fTime = f.time; v.fOccasion = f.occasion; v.fExpected = f.expected; v.fNotes = f.notes;
+      v.expAuto = !f.expTouched && !f.nogroup;
       v.occasionLabel = isParish ? 'Occasion' : 'Occasion (optional)';
       v.efNewType = !!S.efNewType; v.efNewVenue = !!S.efNewVenue;
       const typeList = ((store.settings && store.settings.types) || ['Mass', 'Rehearsal']).slice();
@@ -2142,6 +2175,7 @@ class Component extends DCLogic {
             if (g.code === 'NONE') { this.form.nogroup = true; this.form.groups = []; }
             else if (g.code === 'GC') { this.form.nogroup = false; this.form.groups = []; }
             else { this.form.nogroup = false; this.form.groups = on ? selG.filter(c => c !== g.code) : selG.concat([g.code]); }
+            if (!this.form.expTouched) { const c = this.groupMemberCount(this.form); if (c != null) this.form.expected = c; }
             this.forceUpdate();
           }
         };
@@ -2183,7 +2217,11 @@ class Component extends DCLogic {
             else st.parish.push(Object.assign({ id: 'p' + Date.now() }, rec));
           });
         } else {
-          const exp = Math.max(1, Number(f2.expected) || this.defExpected());
+          const rawExp = String(f2.expected == null ? '' : f2.expected).trim();
+          let exp;
+          if (f2.nogroup) exp = 0;
+          else if (rawExp === '') exp = this.defExpected();
+          else { exp = Number(rawExp); if (!Number.isFinite(exp) || exp < 0) exp = this.defExpected(); }
           const groups = f2.nogroup ? [] : (f2.groups || []).slice();
           this.mutate(st => {
             remember(st);
@@ -2357,6 +2395,7 @@ class Component extends DCLogic {
       v.setExpected = String(DE);
       v.expMinus = () => this.mutate(st => { st.settings = st.settings || { pin: '1234' }; st.settings.defaultExpected = Math.max(1, DE - 1); });
       v.expPlus = () => this.mutate(st => { st.settings = st.settings || { pin: '1234' }; st.settings.defaultExpected = Math.min(60, DE + 1); });
+      v.recalcExp = () => this.mutate(st => { st.settings = st.settings || { pin: '1234' }; this.recalcExpectedAll(st); st.settings.expectedAutofilledV1 = true; });
     }
 
     if (v.mPin) {
